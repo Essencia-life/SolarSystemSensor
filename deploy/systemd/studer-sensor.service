@@ -1,0 +1,23 @@
+[Unit]
+Description=Studer XCOM read-only telemetry collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=studer-sensor
+Group=studer-sensor
+WorkingDirectory=/opt/studer-sensor
+EnvironmentFile=/etc/studer-sensor/studer-sensor.env
+ExecStart=/opt/studer-sensor/.venv/bin/studer-sensor
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/studer-sensor
+DeviceAllow=/dev/ttyUSB0 rw
+
+[Install]
+WantedBy=multi-user.target
