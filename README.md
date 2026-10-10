@@ -101,3 +101,6 @@ See [docs/INSTALL.md](docs/INSTALL.md),
 Run the service as a dedicated non-root user with access only to the serial
 device and spool directory. Hardware wiring, serial settings, and the complete
 hardware-to-DataHub path still require manual verification.
+
+For the initial Raspberry Pi network setup, see
+[docs/raspi-netzwerk-setup-stefan-ben.md](docs/raspi-netzwerk-setup-stefan-ben.md).

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SolarSystemSensor – Projektstatus &amp; fehlende Software</title>
+<style>
+  :root {
+    --bg: #0b1020; --panel: #121a30; --panel2: #18223d; --line: #26335a;
+    --text: #e8edf9; --muted: #93a0c2;
+    --sun: #ffb627; --sun2: #ff7a18;
+    --ok: #3ddc97; --warn: #ffb627; --bad: #ff5d73; --info: #5ab0ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--text); line-height: 1.55;
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    background:
+      radial-gradient(900px 500px at 85% -10%, rgba(255,182,39,.18), transparent 60%),
+      radial-gradient(700px 400px at -10% 10%, rgba(90,176,255,.12), transparent 60%),
+      var(--bg);
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px 80px; }
+  header { padding: 64px 0 32px; }
+  .eyebrow { color: var(--sun); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; font-size: 13px; }
+  h1 { font-size: clamp(32px, 5vw, 52px); line-height: 1.08; margin: 10px 0 14px; letter-spacing: -.02em; }
+  h1 span { background: linear-gradient(90deg, var(--sun), var(--sun2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { color: var(--muted); max-width: 760px; font-size: 18px; }
+  h2 { font-size: 26px; margin: 56px 0 6px; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0 0 22px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 30px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; }
+  .kpi b { display: block; font-size: 32px; letter-spacing: -.02em; }
+  .kpi span { color: var(--muted); font-size: 14px; }
+  .kpi.bad b { color: var(--bad); } .kpi.ok b { color: var(--ok); } .kpi.warn b { color: var(--warn); }
+
+  /* Pipeline */
+  .pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0; position: relative; }
+  .node { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin: 0 10px 10px 0; position: relative; }
+  .node h3 { margin: 0 0 4px; font-size: 15px; }
+  .node p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+  .node::after { content: "→"; position: absolute; right: -19px; top: 50%; transform: translateY(-50%); color: var(--sun); font-weight: 700; z-index: 2; }
+  .node:last-child::after { content: none; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid; }
+  .t-ok   { color: var(--ok);   border-color: rgba(61,220,151,.4);  background: rgba(61,220,151,.1); }
+  .t-warn { color: var(--warn); border-color: rgba(255,182,39,.4);  background: rgba(255,182,39,.1); }
+  .t-bad  { color: var(--bad);  border-color: rgba(255,93,115,.4);  background: rgba(255,93,115,.1); }
+  .t-info { color: var(--info); border-color: rgba(90,176,255,.4);  background: rgba(90,176,255,.1); }
+
+  /* Cards */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--info); border-radius: 16px; padding: 20px 22px; }
+  .card.p0 { border-left-color: var(--bad); } .card.p1 { border-left-color: var(--warn); } .card.p2 { border-left-color: var(--info); }
+  .card h3 { margin: 0 0 8px; font-size: 18px; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+  .card p { margin: 0 0 10px; color: var(--muted); font-size: 15px; }
+  .card ul { margin: 0; padding-left: 18px; font-size: 14.5px; }
+  .card li { margin: 3px 0; }
+  .card code, td code, .note code { background: var(--panel2); border: 1px solid var(--line); padding: 1px 6px; border-radius: 6px; font-size: 13px; color: #ffd98a; }
+
+  /* Roadmap */
+  .road { display: grid; gap: 14px; }
+  .phase { display: grid; grid-template-columns: 64px 1fr; gap: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; }
+  .num { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-weight: 800; font-size: 22px; color: #1b1100; background: linear-gradient(135deg, var(--sun), var(--sun2)); }
+  .phase h3 { margin: 0 0 4px; font-size: 18px; }
+  .phase p { margin: 0 0 8px; color: var(--muted); }
+  .phase ul { margin: 0; padding-left: 18px; font-size: 14.5px; }
+
+  /* Table */
+  .tbl { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  th, td { text-align: left; padding: 12px 16px; vertical-align: top; border-bottom: 1px solid var(--line); }
+  th { background: var(--panel2); color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .08em; }
+  tr:last-child td { border-bottom: 0; }
+
+  .note { background: rgba(255,182,39,.08); border: 1px solid rgba(255,182,39,.35); border-radius: 14px; padding: 16px 20px; margin-top: 22px; color: #ffe2a8; font-size: 15px; }
+  footer { margin-top: 56px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 18px; }
+  @media (max-width: 640px) { .node::after { content: none; } .phase { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Essência · SolarSystemSensor</div>
+  <h1>Was <span>noch fehlt</span> – Software-Status</h1>
+  <p class="lead">
+    Das Gerüst steht (Konfiguration, Polling-Schleife, Offline-Spool, DataHub-Client).
+    Der eigentliche Kern – <strong>echte Studer-Daten lesen und dekodieren</strong> – ist noch nicht gebaut.
+    Stand: Analyse des Codes im Repository, 10.10.2026.
+  </p>
+  <div class="kpis">
+    <div class="kpi ok"><b>5</b><span>Bausteine als Gerüst vorhanden</span></div>
+    <div class="kpi bad"><b>3</b><span>Blocker vor dem ersten echten Messwert</span></div>
+    <div class="kpi warn"><b>0</b><span>Metriken definiert (<code>METRICS = {}</code>)</span></div>
+    <div class="kpi"><b>~77</b><span>Zeilen Tests, kein CI</span></div>
+  </div>
+</header>
+
+<h2>Datenpfad im Überblick</h2>
+<p class="sub">Von der Anlage bis zur Datenbank – und wo es aktuell hakt.</p>
+<div class="pipe">
+  <div class="node"><h3>Studer-Geräte</h3><p>Xtender, VarioString, RCC-02</p><span class="tag t-info">Hardware</span></div>
+  <div class="node"><h3>Xcom-Gateway</h3><p>Xcom-232i / ggf. LAN-Variante – Verbau unbestätigt</p><span class="tag t-warn">ungeklärt</span></div>
+  <div class="node"><h3>Transport</h3><p>Nur serielle Schnittstelle, Platzhalter-Framing</p><span class="tag t-bad">Platzhalter</span></div>
+  <div class="node"><h3>SCOM-Decoder</h3><p>Antworten werden als JSON erwartet</p><span class="tag t-bad">fehlt</span></div>
+  <div class="node"><h3>Normalisierung</h3><p>Funktioniert, aber ohne Metriken</p><span class="tag t-warn">leer</span></div>
+  <div class="node"><h3>Spool + Retry</h3><p>SQLite-Puffer, Backoff</p><span class="tag t-ok">vorhanden</span></div>
+  <div class="node"><h3>DataHub</h3><p>POST /api/ingest/studer-xcom</p><span class="tag t-ok">vorhanden</span></div>
+</div>
+
+<h2>Prio 0 – Blocker</h2>
+<p class="sub">Ohne diese Punkte fließt kein einziger echter Messwert.</p>
+<div class="grid">
+  <div class="card p0">
+    <h3>Echtes SCOM-Protokoll <span class="tag t-bad">Blocker</span></h3>
+    <p><code>protocol.py</code> nutzt generische Start-/Endbytes (<code>0x02</code>/<code>0x03</code>) und eine Summe mod 256. Das ist ausdrücklich <em>nicht</em> das Studer-Format.</p>
+    <ul>
+      <li>Frame-Aufbau nach Spezifikation (PDF liegt in <code>docs/</code>)</li>
+      <li>Header, Adressen, Längenfeld, korrekte Prüfsummen</li>
+      <li>Request-Typen „Property lesen“ (nur lesend!)</li>
+      <li>Fehler- und Timeout-Behandlung pro Antwort</li>
+    </ul>
+  </div>
+  <div class="card p0">
+    <h3>Response-Decoder + Parameter-Tabelle <span class="tag t-bad">Blocker</span></h3>
+    <p>Der CLI-Reader macht <code>json.loads()</code> auf die Rohantwort – das passiert bei echten Geräten nie.</p>
+    <ul>
+      <li>Binäre Antworten dekodieren (Datentypen, Skalierung)</li>
+      <li>Tabelle: Objekt-/Property-ID → Metrikname, Einheit, Faktor</li>
+      <li>Geräteadressen für Xtender, VarioString (und ggf. BSP)</li>
+    </ul>
+  </div>
+  <div class="card p0">
+    <h3>Metriken definieren <span class="tag t-bad">Blocker</span></h3>
+    <p><code>METRICS = {}</code>: Die Normalisierung verwirft aktuell alles. Der Service würde leere Payloads einreihen.</p>
+    <ul>
+      <li>Metrikliste festlegen (Batteriespannung/-strom, PV-Leistung, Ertrag, Lastleistung, Status/Fehler …)</li>
+      <li>Namen mit der DataHub-Validierung abgleichen</li>
+      <li>Leere Zyklen nicht in den Spool schreiben</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Prio 1 – Für den stabilen Betrieb</h2>
+<p class="sub">Damit der Pi unbeaufsichtigt laufen kann.</p>
+<div class="grid">
+  <div class="card p1">
+    <h3>Transport &amp; Verbindung <span class="tag t-warn">Prio 1</span></h3>
+    <p>Aktuell nur <code>pyserial</code>. Da der Pi per Ethernet/WLAN angebunden wird, sollte geklärt werden, welche Gateway-Variante verbaut ist.</p>
+    <ul>
+      <li>Verbaute Hardware vor Ort bestätigen</li>
+      <li>Ggf. zusätzlicher Netzwerk-Transport (TCP/UDP) für LAN-Gateways</li>
+      <li>Wiederverbinden nach Kabel-/Port-Ausfall</li>
+    </ul>
+  </div>
+  <div class="card p1">
+    <h3>Robuste Fehlerbehandlung <span class="tag t-warn">Prio 1</span></h3>
+    <ul>
+      <li>Unerwartete Exceptions beim Senden werden nur für <code>DataHubError</code> abgefangen – sonst bricht die Schleife ab</li>
+      <li>HTTP 400/401 werden endlos wiederholt statt verworfen bzw. eskaliert</li>
+      <li>Backoff <code>2**attempts</code> wächst unbegrenzt – Maximum fehlt</li>
+      <li>Wartezeit zwischen Zyklen ignoriert Dauer der Abfrage</li>
+    </ul>
+  </div>
+  <div class="card p1">
+    <h3>Gerätediscovery einbinden <span class="tag t-warn">Prio 1</span></h3>
+    <p><code>discovery.py</code> existiert, ist aber nirgends im Service verdrahtet.</p>
+    <ul>
+      <li>Angeschlossene Geräte beim Start ermitteln</li>
+      <li>Mehrere Geräte pro Zyklus abfragen</li>
+      <li>Port automatisch über <code>/dev/serial/by-id</code> wählen</li>
+    </ul>
+  </div>
+  <div class="card p1">
+    <h3>Beobachtbarkeit <span class="tag t-warn">Prio 1</span></h3>
+    <ul>
+      <li>Health-/Status-Ausgabe (letzter Erfolg, Spool-Größe, Fehlerzähler)</li>
+      <li>Strukturierte Logs, Log-Rotation</li>
+      <li>Alarm, wenn lange keine Daten ankommen</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Prio 2 – Qualität &amp; Komfort</h2>
+<div class="grid">
+  <div class="card p2">
+    <h3>Tests <span class="tag t-info">Prio 2</span></h3>
+    <ul>
+      <li>Tests gegen echte aufgezeichnete Frames</li>
+      <li>Simulator/Fake-Gerät für Entwicklung ohne Hardware</li>
+      <li>Tests für Fehlerpfade (Timeout, 400/401, Neustart)</li>
+    </ul>
+  </div>
+  <div class="card p2">
+    <h3>CI &amp; Release <span class="tag t-info">Prio 2</span></h3>
+    <ul>
+      <li>GitHub Actions: Tests + Linting bei jedem Push</li>
+      <li>Versionierung und reproduzierbare Installation</li>
+      <li>Typprüfung (mypy/pyright)</li>
+    </ul>
+  </div>
+  <div class="card p2">
+    <h3>Provisionierung des Pi <span class="tag t-info">Prio 2</span></h3>
+    <ul>
+      <li>Install-Skript (Benutzer, venv, systemd, Env-Datei)</li>
+      <li>Netzwerk-Setup (Ethernet + WLAN) reproduzierbar machen</li>
+      <li>Zeitsynchronisation prüfen (NTP)</li>
+    </ul>
+  </div>
+  <div class="card p2">
+    <h3>Sicherheit <span class="tag t-info">Prio 2</span></h3>
+    <ul>
+      <li>HTTPS für <code>DATAHUB_URL</code> erzwingen</li>
+      <li>Schreibzugriffe auf Geräte technisch ausschließen (Allowlist)</li>
+      <li>Dateirechte von Env-Datei und Spool prüfen</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Empfohlene Reihenfolge</h2>
+<p class="sub">Vom ersten echten Messwert bis zum Dauerbetrieb.</p>
+<div class="road">
+  <div class="phase"><div class="num">1</div><div>
+    <h3>Hardware &amp; Verbindung klären</h3>
+    <p>Pi per Ethernet, WLAN einrichten (Anleitung für Stefan und Ben vorhanden).</p>
+    <ul><li>Verbautes Gateway, Verdrahtung und Geräteadressen vor Ort dokumentieren</li><li>Ersten Roh-Frame mitschneiden</li></ul>
+  </div></div>
+  <div class="phase"><div class="num">2</div><div>
+    <h3>Protokoll &amp; Decoder</h3>
+    <p>Aus der Studer-Spezifikation ableiten.</p>
+    <ul><li>Framing mit echten Prüfsummen</li><li>Ein Wert (z. B. Batteriespannung) Ende-zu-Ende lesen und mit dem Display vergleichen</li></ul>
+  </div></div>
+  <div class="phase"><div class="num">3</div><div>
+    <h3>Metriken &amp; DataHub</h3>
+    <p>Messwerte vollständig bis in die Datenbank bringen.</p>
+    <ul><li>Metrikliste, Einheiten, Skalierung</li><li>Gegenprobe in <code>sensor_measurements</code></li></ul>
+  </div></div>
+  <div class="phase"><div class="num">4</div><div>
+    <h3>Härtung</h3>
+    <p>Fehlerpfade, Reconnect, Health-Status, Alarmierung.</p>
+    <ul><li>Retry-Regeln für permanente Fehler</li><li>Langzeittest am Pi</li></ul>
+  </div></div>
+  <div class="phase"><div class="num">5</div><div>
+    <h3>Betrieb &amp; Automatisierung</h3>
+    <p>CI, Install-Skript, Dokumentation für den Dauerbetrieb.</p>
+  </div></div>
+</div>
+
+<h2>Bestandsaufnahme der Module</h2>
+<div class="tbl"><table>
+  <thead><tr><th>Modul</th><th>Zweck</th><th>Stand</th></tr></thead>
+  <tbody>
+    <tr><td><code>config.py</code></td><td>Konfiguration aus Umgebungsvariablen</td><td><span class="tag t-ok">brauchbar</span></td></tr>
+    <tr><td><code>service.py</code></td><td>Polling-Schleife, Spool, Auslieferung</td><td><span class="tag t-warn">Fehlerbehandlung offen</span></td></tr>
+    <tr><td><code>spool.py</code></td><td>Persistenter Offline-Puffer (SQLite)</td><td><span class="tag t-ok">brauchbar</span></td></tr>
+    <tr><td><code>datahub.py</code></td><td>HTTP-Client für den DataHub</td><td><span class="tag t-ok">brauchbar</span></td></tr>
+    <tr><td><code>transport.py</code></td><td>Serielle Kommunikation</td><td><span class="tag t-warn">nur seriell</span></td></tr>
+    <tr><td><code>protocol.py</code></td><td>Framing</td><td><span class="tag t-bad">Platzhalter</span></td></tr>
+    <tr><td><code>telemetry.py</code></td><td>Normalisierung der Messwerte</td><td><span class="tag t-bad">keine Metriken</span></td></tr>
+    <tr><td><code>discovery.py</code></td><td>Port-/Geräteerkennung</td><td><span class="tag t-warn">nicht eingebunden</span></td></tr>
+    <tr><td><code>cli.py</code></td><td>Einstiegspunkt</td><td><span class="tag t-bad">Reader erwartet JSON</span></td></tr>
+  </tbody>
+</table></div>
+
+<div class="note">
+  <strong>Hinweis:</strong> Die Einstufungen sind eine Einschätzung auf Basis des Codes, nicht auf Basis
+  eines Hardwaretests. Ob die Studer-Geräte wie vermutet angebunden sind, ist weiterhin vor Ort zu bestätigen.
+</div>
+
+<footer>SolarSystemSensor · Essência · generiert aus dem Repository-Stand vom 10.10.2026</footer>
+</div>
+</body>
+</html>
