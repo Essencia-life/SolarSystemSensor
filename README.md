@@ -86,7 +86,7 @@ spool persistence, and service orchestration. The CLI is installed as
 `studer-sensor` runs the polling loop and handles SIGINT/SIGTERM gracefully.
 Configure it with [deploy/studer-sensor.env.example](deploy/studer-sensor.env.example):
 
-- serial connection: `SERIAL_PORT`, `SERIAL_BAUDRATE` (38400), `SERIAL_PARITY` (E), `SERIAL_TIMEOUT`
+- serial connection: `SERIAL_PORT`, `SERIAL_BAUDRATE` (fixed by the Xcom-232i: 38400), `SERIAL_PARITY` (E), `SERIAL_TIMEOUT`
 - values to read: `SCOM_INFOS` (`address:info` pairs, see [docs/INSTALL.md](docs/INSTALL.md)), `SCOM_SRC_ADDR`
 - DataHub: `DATAHUB_URL`, `DATAHUB_API_KEY`, `DATAHUB_TIMEOUT`
 - identity/timing: `DEVICE_ID`, `POLL_INTERVAL`
