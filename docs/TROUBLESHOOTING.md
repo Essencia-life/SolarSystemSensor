@@ -40,6 +40,9 @@ pinout, and device addresses on site.
   an optional field. Inspect normalized output and configure only documented
   metrics; a missing value should not crash collection.
 
+See the error table in [INSTALL.md](INSTALL.md#4-first-single-read) for the
+log messages of a failing read.
+
 Use `journalctl -u studer-sensor` and the configured spool database metrics to
 separate serial acquisition, normalization, and HTTP ingestion failures.
 Redact API keys and payload secrets from support logs.
