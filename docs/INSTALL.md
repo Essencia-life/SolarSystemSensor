@@ -16,16 +16,30 @@ talks RS-232 to the Raspberry Pi. It only answers once it is on the bus.
 
 ### Xcom-232i on the bus
 
-- Use a free bus port (labelled "CAN" in the Xcom manual) and the same type of
-  cable that already links the other devices. Never plug the RS-232 side into a
+- Every Studer device has two RJ45 bus sockets and either one can be used
+  (they are labelled "CAN" in the Xcom manual). The Xcom has no power supply of
+  its own: four of the eight bus wires carry supply voltage from the Xtender,
+  VarioTrack or VarioString to accessories.
+- **Cable:** the bus needs all eight wires connected 1:1, so use a normal
+  straight patch cable (Cat5e or better) or a Studer original cable. No
+  crossover cable. No Studer document we found names a cable model, so ask your
+  installer if in doubt.
+- **The bus is not Ethernet.** Never plug it into a router, switch or LAN
+  socket (it carries supply voltage), and never plug the RS-232 side into a
   bus port or the other way round.
+- **Placement:** the simplest setup is the end of the bus, directly at an
+  Xtender, VarioTrack or VarioString. Studer requires this for the Xcom-LAN/GSM;
+  for the Xcom-232i the manual does not say, but the same layout avoids
+  termination mistakes.
 - **Termination:** exactly the two devices at the two ends of the bus have their
-  termination switch on `T`; all devices in between are on `O`.
+  "End Bus" / termination switch on `T`; all devices in between are on `O`.
   - Xcom at the end of the chain (one cable): Xcom `T`, and the device that was
     the end before goes to `O`.
   - Xcom in the middle (two cables): Xcom `O`, the existing end devices stay.
   - The Xcom manual contradicts itself about the factory setting, so always
     check the switch. A wrong setting can make the whole bus run erratically.
+- **Check:** on the RCC, open the system info summary. A device that is missing
+  there points to a bus or power problem.
 - Installation work belongs to a qualified person who knows the local rules. The
   manual only asks to switch the Xtenders off for SD-card updates; it does not
   say whether plugging cables in while the system runs is intended. Ask your
@@ -38,10 +52,19 @@ talks RS-232 to the Raspberry Pi. It only answers once it is on the bus.
 
 - The Xcom has a DE-9 **female** RS-232 connector. Only RxD (pin 2), TxD (pin 3)
   and GND (pin 5) are connected; the port is isolated (500 V DC) from the battery.
-- The spec prescribes a **straight** cable female to male ("Female-Male,
-  straight", spec section 2.2). Use it with a USB-RS232 adapter that has a male
-  DE-9 plug (FTDI or PL2303 chips work). If your adapter has a female socket you
-  need a null-modem adapter in between.
+- **No null-modem needed.** The spec prescribes a straight cable for a PC
+  ("Female-Male, straight", spec section 2.2) and calls the PC the DTE, which
+  must ignore CTS, DTR and DCD because the Xcom only wires RxD, TxD and GND. A PC
+  or USB-RS232 adapter is the terminal side, the Xcom the device side, and those
+  two are connected 1:1. The pin table in the spec (pin 2 = RxD, pin 3 = TxD) is
+  written from the PC's point of view, which is why it looks crossed at first
+  sight.
+- Use a USB-RS232 adapter with a **male** DE-9 plug (FTDI or PL2303 chips work).
+  It can be plugged straight into the Xcom, which is the same as a straight
+  cable; otherwise use a straight female-male cable.
+- A null-modem adapter is only a last diagnostic step if everything else checks
+  out and there is still no answer. It cannot damage anything, but it should not
+  be necessary.
 - The line settings are fixed by the device: **38400 baud, 8 data bits, even
   parity, 1 stop bit** (spec section 3.1). Nothing to configure on the Xcom.
   The baud rate is simply the transmission speed in bits per second; both ends
@@ -125,7 +148,7 @@ Then extend `SCOM_INFOS` step by step, e.g.
 
 | Log message | Likely cause |
 |---|---|
-| `expected 14 bytes, got 0` (timeout) | Nothing answers: Xcom not on the bus or not powered, wrong port, cable/adapter gender, RxD/TxD swapped (try a null-modem adapter), wrong `SERIAL_PORT` |
+| `expected 14 bytes, got 0` (timeout) | Nothing answers: Xcom not on the bus or not powered, wrong `SERIAL_PORT`, cable/adapter (straight cable, adapter with male plug; null-modem only as a last diagnostic step) |
 | `bad start byte`, `checksum mismatch` | Garbage on the line: bad cable/adapter, interference; settings must be 38400 8E1 |
 | `SCOM error DEVICE_NOT_FOUND` | No device at that address (e.g. no BSP at 601) |
 | `SCOM error OBJECT_ID_NOT_FOUND` | The device or firmware does not offer that info |
