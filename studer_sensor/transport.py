@@ -3,7 +3,9 @@ from .scom import HEADER_LEN, CHECKSUM_LEN, Frame, ScomTimeout, parse_frame, par
 
 @dataclass
 class SerialSettings:
-    # Xcom-232i: 38400 baud, 8 data bits, even parity, 1 stop bit (spec 3.1).
+    # Xcom-232i: 38400 baud, 8 data bits, even parity, 1 stop bit (spec V1.5.16, 3.1).
+    # The baud rate must equal the setting on the Xcom-232i. Other setups use 115200;
+    # with a wrong rate you only get garbage, i.e. checksum errors or timeouts.
     # The response delay can reach 2 s (spec 3.7), so the timeout leaves some margin.
     port: str
     baudrate: int=38400

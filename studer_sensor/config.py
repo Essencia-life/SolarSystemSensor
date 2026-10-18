@@ -19,6 +19,10 @@ class ServiceConfig:
     poll_interval: float = 30.0
     spool_path: str = "spool.sqlite3"
     log_level: str = "INFO"
+    # Baud rate = serial transmission speed in bits per second. Sender and receiver must use
+    # the same value, otherwise every frame arrives garbled (checksum errors / timeouts).
+    # 38400 is the value in the protocol spec V1.5.16; the Xcom-232i itself is configurable
+    # and some setups use 115200. Set SERIAL_BAUDRATE to match the device, see docs/INSTALL.md.
     serial_baudrate: int = 38400
     serial_timeout: float = 3.0
     serial_parity: str = "E"
