@@ -72,9 +72,9 @@ def test_decode_enum_and_length_check():
 
 def test_parse_queries_default_and_custom():
     default = parse_queries(None)
-    assert default[0].metric == "xt1_battery_voltage" and default[0].unit == "V"
+    assert default[0].metric == "xt1_battery_voltage_v" and default[0].unit == "V"
     custom = parse_queries("601:7002, 301:11004, 101:3010")
-    assert [q.metric for q in custom] == ["bsp_state_of_charge", "vt1_pv_power",
+    assert [q.metric for q in custom] == ["bsp_state_of_charge_pct", "vt1_pv_power_kw",
                                           "xt1_battery_cycle_phase"]
     assert custom[2].fmt == "ENUM"
     assert parse_queries("101:9999")[0].metric == "xt1_info_9999"
@@ -108,7 +108,7 @@ class FakeTransport:
 def test_reader_sends_one_request_per_info_and_skips_failures():
     transport = FakeTransport([12.5, "timeout", 0x0002])
     reader = ScomReader(transport, parse_queries("101:3000,101:3005,601:7002"))
-    assert reader() == {"xt1_battery_voltage": 12.5}
+    assert reader() == {"xt1_battery_voltage_v": 12.5}
     assert len(transport.sent) == 3
     assert transport.sent[0] == build_frame(1, 101, read_property_request(1, 3000, 1))
     assert transport.sent[2] == build_frame(1, 601, read_property_request(1, 7002, 1))
@@ -123,7 +123,7 @@ def test_reader_raises_when_everything_fails():
 def test_reader_feeds_collector_with_units():
     reader = ScomReader(FakeTransport([51.25]), parse_queries("101:3000"))
     assert Collector(reader, reader.definitions()).collect() == {
-        "xt1_battery_voltage": {"value": 51.25, "unit": "V"}}
+        "xt1_battery_voltage_v": {"value": 51.25, "unit": "V"}}
 
 
 class FakeSerial:
@@ -159,4 +159,10 @@ def test_serial_defaults_follow_spec():
     cfg = ServiceConfig.from_env({"SERIAL_PORT": "p", "DATAHUB_URL": "u",
                                   "DATAHUB_API_KEY": "k", "DEVICE_ID": "d"})
     assert (cfg.serial_baudrate, cfg.serial_parity, cfg.scom_src_addr) == (38400, "E", 1)
-    assert cfg.query_hex is None and cfg.scom_infos is None
+    assert cfg.scom_infos is None
+
+
+def test_metric_names_follow_datahub_convention():
+    names = [q.metric for q in parse_queries("101:3000,101:3081,601:7002,101:3028")]
+    assert names == ["xt1_battery_voltage_v", "xt1_energy_from_today_kwh",
+                     "bsp_state_of_charge_pct", "xt1_operating_state"]

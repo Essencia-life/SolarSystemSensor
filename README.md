@@ -56,13 +56,14 @@ spool for retry. The DataHub API key is never logged or committed.
 
 ## Protocol boundary
 
-The repository does not invent Studer command IDs, addresses, property
-definitions, scaling factors, or hardware pinouts. Those values must come
-from the official Studer documentation for the installed firmware. The
-transport and framing code is configurable and read-only, but the
-firmware-specific response decoder still requires the documented SCOM mapping.
-Do not treat passing mocked tests as proof that a particular Xcom/device
-combination is compatible.
+Framing, addresses and info numbers come from
+[docs/Technical specification - Xtender serial protocol - V1.5.16.pdf](docs/Technical%20specification%20-%20Xtender%20serial%20protocol%20-%20V1.5.16.pdf)
+(`studer_sensor/scom.py`); only the read-only `READ_PROPERTY` service is
+implemented, one request per value. The tests check the spec's example frames
+byte for byte, but passing tests are no proof that a particular Xcom/device
+combination works: verify against the real hardware first (`--once`). That
+spec revision lists Xtender, BSP, VarioTrack and Xcom-MS; it does not list the
+VarioString, so its PV data may need a newer spec.
 
 ## Development
 
@@ -73,25 +74,27 @@ pip install -r requirements.txt
 pytest -q
 ```
 
-The test suite covers framing, transport, normalization, DataHub requests,
-device discovery, SQLite spool persistence, and service orchestration. The
-CLI is installed as `studer-sensor`.
+The test suite covers SCOM framing and checksums (including the spec's example
+frames), transport, normalization, DataHub requests, device discovery, SQLite
+spool persistence, and service orchestration. The CLI is installed as
+`studer-sensor`.
 
 ## Configuration and service
 
 `studer-sensor` runs the polling loop and handles SIGINT/SIGTERM gracefully.
 Configure it with [deploy/studer-sensor.env.example](deploy/studer-sensor.env.example):
 
-- serial connection: `SERIAL_PORT`, `SERIAL_BAUDRATE`, `SERIAL_TIMEOUT`
-- documented read-only query: `SCOM_QUERY_HEX`
+- serial connection: `SERIAL_PORT`, `SERIAL_BAUDRATE` (38400), `SERIAL_PARITY` (E), `SERIAL_TIMEOUT`
+- values to read: `SCOM_INFOS` (`address:info` pairs, see [docs/INSTALL.md](docs/INSTALL.md)), `SCOM_SRC_ADDR`
 - DataHub: `DATAHUB_URL`, `DATAHUB_API_KEY`, `DATAHUB_TIMEOUT`
 - identity/timing: `DEVICE_ID`, `POLL_INTERVAL`
 - local reliability: `SPOOL_PATH`
 - logging: `LOG_LEVEL`
 
 `DATAHUB_URL` is the DataHub base URL; the client appends
-`/api/ingest/studer-xcom`. `SCOM_QUERY_HEX` must be supplied from the official
-protocol documentation. `--once` runs one controlled collection cycle.
+`/api/ingest/studer-xcom`. `--once` runs one controlled collection cycle.
+Metric names follow the DataHub convention `<device>_<name>_<unit>`, e.g.
+`xt1_battery_voltage_v`, `bsp_state_of_charge_pct`.
 
 ## Raspberry Pi deployment
 

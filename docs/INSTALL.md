@@ -12,7 +12,8 @@ The protocol has no bulk read: every value is one request/response pair
 `address:info` pairs, e.g. `101:3000` is the battery voltage of the first
 Xtender (addresses: Xtender 101-109, VarioTrack 301-331, BSP 601; info
 numbers: spec chapters 6.2, 6.5, 6.9). Without `SCOM_INFOS` the first Xtender's
-battery, AC input and output values are read. A value that cannot be read
+battery, AC input and output values are read. Metrics are named
+`<device>_<name>_<unit>` (e.g. `xt1_battery_voltage_v`). A value that cannot be read
 (device missing, timeout) is logged and skipped. Enumerations need a format
 suffix when the info is not in the built-in catalog, e.g. `101:3010:ENUM`.
 

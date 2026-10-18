@@ -1,21 +1,12 @@
-from studer_sensor.protocol import *
 from studer_sensor.telemetry import *
 from studer_sensor.spool import Spool
 from studer_sensor.discovery import Device, discover_devices
 from studer_sensor.discovery import SCOMDevice, discover_scom
-from studer_sensor.transport import SerialSettings, SerialTransport
 from studer_sensor.datahub import DataHubClient
 from studer_sensor.config import ServiceConfig
 from studer_sensor.service import CollectorService
 import json
 import urllib.error
-
-def test_frame_roundtrip():
- p=b'abc'; assert parse_frame(frame(p))==p
-
-def test_checksum_rejects():
- try: parse_frame(frame(b'a')[:-2]+b'\x00'+frame(b'a')[-1:]); assert False
- except ValueError: pass
 
 def test_missing_metrics():
  assert normalize({'x':'2'},{'x':MetricDefinition('x','V',2),'y':MetricDefinition('y')})['x']['value']==4
@@ -25,14 +16,6 @@ def test_spool(tmp_path):
 
 def test_discovery_provider():
  assert discover_devices(lambda: [Device('/dev/test', 'mock')])[0].port == '/dev/test'
-
-def test_transport_uses_configured_frame():
- class Fake:
-  def write(self, data): self.sent=data
-  def read_until(self, terminator): return frame(b'response')
- fake=Fake()
- assert SerialTransport(SerialSettings('/dev/null'), fake).transact(b'request') == b'response'
- assert fake.sent == frame(b'request')
 
 def test_datahub_request(monkeypatch):
  seen={}

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from .protocol import frame, parse_frame, ProtocolConfig
-from .scom import HEADER_LEN, CHECKSUM_LEN, Frame, ScomTimeout, parse_frame as parse_scom_frame, parse_header
+from .scom import HEADER_LEN, CHECKSUM_LEN, Frame, ScomTimeout, parse_frame, parse_header
 
 @dataclass
 class SerialSettings:
@@ -12,20 +11,6 @@ class SerialSettings:
     bytesize: int=8
     parity: str='E'
     stopbits: int=1
-
-class SerialTransport:
-    """Read-only serial transport; no write/configuration API is exposed."""
-    def __init__(self, settings: SerialSettings, serial_obj=None, protocol=ProtocolConfig()):
-        self.settings=settings; self.protocol=protocol
-        if serial_obj is not None: self._serial=serial_obj
-        else:
-            try:
-                import serial
-            except ImportError as e: raise RuntimeError('pyserial is required for serial transport; install requirements.txt') from e
-            self._serial=serial.Serial(**settings.__dict__)
-    def transact(self, payload: bytes) -> bytes:
-        self._serial.write(frame(payload,self.protocol)); return parse_frame(self._serial.read_until(bytes([self.protocol.end])),self.protocol)
-
 
 class ScomTransport:
     """Request/response over the Xcom-232i RS-232 port using Studer SCOM frames.
@@ -52,4 +37,4 @@ class ScomTransport:
         self._serial.write(raw)
         header=self._read_exact(HEADER_LEN)
         length=parse_header(header)[3]
-        return parse_scom_frame(header+self._read_exact(length+CHECKSUM_LEN))
+        return parse_frame(header+self._read_exact(length+CHECKSUM_LEN))

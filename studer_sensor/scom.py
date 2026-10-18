@@ -154,12 +154,26 @@ INFO_CATALOG = {
     3000: InfoSpec("battery_voltage", "V"),
     3005: InfoSpec("battery_charge_current", "A"),
     3007: InfoSpec("state_of_charge", "%"),
+    3006: InfoSpec("battery_voltage_ripple", "V"),
+    3008: InfoSpec("low_voltage_disconnect", "V"),
     3010: InfoSpec("battery_cycle_phase", None, "ENUM"),
     3011: InfoSpec("input_voltage", "V"),
     3012: InfoSpec("input_current", "A"),
+    3018: InfoSpec("input_limit_reached", None, "ENUM"),
+    3019: InfoSpec("boost_active", None, "ENUM"),
+    3020: InfoSpec("transfer_relay", None, "ENUM"),
     3021: InfoSpec("output_voltage", "V"),
     3022: InfoSpec("output_current", "A"),
     3028: InfoSpec("operating_state", None, "ENUM"),
+    3045: InfoSpec("overload_count"),
+    3046: InfoSpec("overtemperature_count"),
+    3047: InfoSpec("battery_overvoltage_count"),
+    3076: InfoSpec("battery_discharge_prev_day", "kWh"),
+    3078: InfoSpec("battery_discharge_today", "kWh"),
+    3080: InfoSpec("energy_from_prev_day", "kWh"),
+    3081: InfoSpec("energy_from_today", "kWh"),
+    3082: InfoSpec("consumers_energy_prev_day", "kWh"),
+    3083: InfoSpec("consumers_energy_today", "kWh"),
     3084: InfoSpec("input_frequency", "Hz"),
     3085: InfoSpec("output_frequency", "Hz"),
     3087: InfoSpec("output_active_power", "W"),
@@ -168,6 +182,8 @@ INFO_CATALOG = {
     7001: InfoSpec("battery_current", "A"),
     7002: InfoSpec("state_of_charge", "%"),
     7003: InfoSpec("power", "W"),
+    7004: InfoSpec("remaining_autonomy"),
+    7006: InfoSpec("relative_capacity", "%"),
     7029: InfoSpec("battery_temperature", "°C"),
     11000: InfoSpec("battery_voltage", "V"),
     11001: InfoSpec("battery_current", "A"),
@@ -180,6 +196,11 @@ INFO_CATALOG = {
 
 # First Xtender (address 101): battery, AC input and output.
 DEFAULT_QUERIES = "101:3000,101:3005,101:3011,101:3012,101:3021,101:3022,101:3087,101:3088"
+
+
+# DataHub convention: <name>_<unit>, e.g. battery_voltage_v, battery_soc_pct, pv_power_w.
+UNIT_SUFFIX = {"V": "_v", "A": "_a", "%": "_pct", "W": "_w", "kW": "_kw", "Hz": "_hz",
+               "°C": "_c", "Ah": "_ah", "kWh": "_kwh"}
 
 
 def device_label(dst: int) -> str:
@@ -216,7 +237,7 @@ def parse_queries(spec: str | None) -> list[InfoQuery]:
         fmt = parts[2].upper() if len(parts) == 3 else known.fmt
         if fmt not in _FORMATS:
             raise ValueError(f"unsupported format {fmt!r} in {item!r}")
-        queries.append(InfoQuery(device, info_id, f"{device_label(device)}_{known.name}",
+        queries.append(InfoQuery(device, info_id, f"{device_label(device)}_{known.name}{UNIT_SUFFIX.get(known.unit, '')}",
                                  known.unit, fmt))
     return queries
 
