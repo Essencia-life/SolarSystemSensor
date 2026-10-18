@@ -24,9 +24,10 @@ talks RS-232 to the Raspberry Pi. It only answers once it is on the bus.
   straight patch cable (Cat5e or better) or a Studer original cable. No
   crossover cable. No Studer document we found names a cable model, so ask your
   installer if in doubt.
-- **The bus is not Ethernet.** Never plug it into a router, switch or LAN
-  socket (it carries supply voltage), and never plug the RS-232 side into a
-  bus port or the other way round.
+- **The bus is not Ethernet.** Never plug it into a router, switch, LAN socket
+  or the **LAN port of the Raspberry Pi** (same RJ45 shape, but the bus carries
+  supply voltage). The Pi connects to the Xcom only through the USB-RS232
+  adapter, never through a network cable.
 - **Placement:** the simplest setup is the end of the bus, directly at an
   Xtender, VarioTrack or VarioString. Studer requires this for the Xcom-LAN/GSM;
   for the Xcom-232i the manual does not say, but the same layout avoids
