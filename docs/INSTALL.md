@@ -4,6 +4,11 @@ The collector is intentionally read-only: it only sends READ_PROPERTY requests
 and never writes device settings. The framing (`studer_sensor/scom.py`) follows
 `docs/Technical specification - Xtender serial protocol - V1.5.16.pdf`:
 38400 baud, 8 data bits, even parity, 1 stop bit (set `SERIAL_BAUDRATE` to whatever the Xcom-232i is configured for).
+The baud rate is the serial transmission speed; both ends must use the same one.
+If the log shows checksum errors or timeouts on every read, try 115200 (or the
+rate shown in the Xcom-232i/RCC settings) before suspecting the wiring.
+The info numbers are listed in
+`docs/Technical specification - Xtender serial protocol appendix - V1.6.40.pdf`.
 
 ## Which values are read
 

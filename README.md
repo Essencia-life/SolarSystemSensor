@@ -60,7 +60,7 @@ Framing comes from
 [docs/Technical specification - Xtender serial protocol - V1.5.16.pdf](docs/Technical%20specification%20-%20Xtender%20serial%20protocol%20-%20V1.5.16.pdf);
 the info numbers (Xtender 3xxx, BSP 7xxx, VarioTrack 11xxx, VarioString 15xxx)
 are checked against the *Xtender serial protocol appendix* V1.6.40
-([Studer download](https://portal.studer-innotec.com/Content/docs/appendix.pdf)).
+([docs/Technical specification - Xtender serial protocol appendix - V1.6.40.pdf](docs/Technical%20specification%20-%20Xtender%20serial%20protocol%20appendix%20-%20V1.6.40.pdf)).
 Only the read-only `READ_PROPERTY` service is implemented (`studer_sensor/scom.py`),
 one request per value. The tests check the spec's example frames byte for byte,
 but passing tests are no proof that a particular Xcom/device combination works:
