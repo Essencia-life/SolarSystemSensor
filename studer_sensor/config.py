@@ -23,7 +23,6 @@ class ServiceConfig:
     serial_timeout: float = 3.0
     serial_parity: str = "E"
     datahub_timeout: float = 10.0
-    query_hex: str | None = None
     scom_src_addr: int = 1
     scom_infos: str | None = None
 
@@ -42,6 +41,5 @@ class ServiceConfig:
                    serial_timeout=float(get("SERIAL_TIMEOUT", 3)),
                    serial_parity=get("SERIAL_PARITY", "E").upper(),
                    datahub_timeout=float(get("DATAHUB_TIMEOUT", 10)),
-                   query_hex=get("SCOM_QUERY_HEX") or None,
                    scom_src_addr=int(get("SCOM_SRC_ADDR", 1)),
                    scom_infos=get("SCOM_INFOS") or None)
