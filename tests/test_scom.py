@@ -74,7 +74,7 @@ def test_parse_queries_default_and_custom():
     default = parse_queries(None)
     assert default[0].metric == "xt1_battery_voltage_v" and default[0].unit == "V"
     custom = parse_queries("601:7002, 301:11004, 101:3010")
-    assert [q.metric for q in custom] == ["bsp_state_of_charge_pct", "vt1_pv_power_kw",
+    assert [q.metric for q in custom] == ["bsp_state_of_charge_pct", "vt1_pv_power_w",
                                           "xt1_battery_cycle_phase"]
     assert custom[2].fmt == "ENUM"
     assert parse_queries("101:9999")[0].metric == "xt1_info_9999"
@@ -83,8 +83,8 @@ def test_parse_queries_default_and_custom():
 
 
 def test_device_labels():
-    assert [device_label(a) for a in (101, 109, 192, 301, 601, 999)] == [
-        "xt1", "xt9", "xt_l2", "vt1", "bsp", "dev999"]
+    assert [device_label(a) for a in (101, 109, 192, 301, 601, 701, 702, 999)] == [
+        "xt1", "xt9", "xt_l2", "vt1", "bsp", "vs1", "vs2", "dev999"]
 
 
 class FakeTransport:
@@ -166,3 +166,30 @@ def test_metric_names_follow_datahub_convention():
     names = [q.metric for q in parse_queries("101:3000,101:3081,601:7002,101:3028")]
     assert names == ["xt1_battery_voltage_v", "xt1_energy_from_today_kwh",
                      "bsp_state_of_charge_pct", "xt1_operating_state"]
+
+
+def test_variostring_infos_use_vs_address_and_watts():
+    names = {q.info_id: q for q in parse_queries("701:15004,701:15010,701:15017,701:15108")}
+    assert names[15004].metric == "vs1_pv_voltage_v"
+    assert names[15010].metric == "vs1_pv_power_w" and names[15010].scale == 1000.0
+    assert names[15017].metric == "vs1_production_kwh_today_kwh"
+    assert names[15108].metric == "vs1_state" and names[15108].fmt == "ENUM"
+
+
+def test_kw_values_are_reported_in_watts():
+    reader = ScomReader(FakeTransport([4.2]), parse_queries("701:15010"))
+    result = Collector(reader, reader.definitions()).collect()
+    assert result == {"vs1_pv_power_w": {"value": pytest.approx(4200.0), "unit": "W"}}
+
+
+def test_nan_values_are_skipped_not_sent():
+    # BSP remaining autonomy is NaN while charging; NaN is not valid JSON for the DataHub.
+    reader = ScomReader(FakeTransport([float("nan"), 12.5]), parse_queries("601:7004,101:3000"))
+    assert reader() == {"xt1_battery_voltage_v": 12.5}
+
+
+def test_catalog_units_match_appendix():
+    queries = {q.info_id: q for q in parse_queries("601:7004,101:3136,601:7005")}
+    assert queries[7004].unit == "min" and queries[7004].metric == "bsp_remaining_autonomy_min"
+    assert queries[3136].unit == "W" and queries[3136].scale == 1000.0
+    assert queries[7005].metric == "bsp_temperature_c"
