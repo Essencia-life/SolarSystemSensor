@@ -19,10 +19,13 @@ class ServiceConfig:
     poll_interval: float = 30.0
     spool_path: str = "spool.sqlite3"
     log_level: str = "INFO"
-    serial_baudrate: int = 9600
-    serial_timeout: float = 1.0
+    serial_baudrate: int = 38400
+    serial_timeout: float = 3.0
+    serial_parity: str = "E"
     datahub_timeout: float = 10.0
     query_hex: str | None = None
+    scom_src_addr: int = 1
+    scom_infos: str | None = None
 
     @classmethod
     def from_env(cls, environ=None):
@@ -35,7 +38,10 @@ class ServiceConfig:
                    poll_interval=float(get("POLL_INTERVAL", 30)),
                    spool_path=get("SPOOL_PATH", "spool.sqlite3"),
                    log_level=get("LOG_LEVEL", "INFO"),
-                   serial_baudrate=int(get("SERIAL_BAUDRATE", 9600)),
-                   serial_timeout=float(get("SERIAL_TIMEOUT", 1)),
+                   serial_baudrate=int(get("SERIAL_BAUDRATE", 38400)),
+                   serial_timeout=float(get("SERIAL_TIMEOUT", 3)),
+                   serial_parity=get("SERIAL_PARITY", "E").upper(),
                    datahub_timeout=float(get("DATAHUB_TIMEOUT", 10)),
-                   query_hex=get("SCOM_QUERY_HEX"))
+                   query_hex=get("SCOM_QUERY_HEX") or None,
+                   scom_src_addr=int(get("SCOM_SRC_ADDR", 1)),
+                   scom_infos=get("SCOM_INFOS") or None)
