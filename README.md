@@ -56,14 +56,16 @@ spool for retry. The DataHub API key is never logged or committed.
 
 ## Protocol boundary
 
-Framing, addresses and info numbers come from
-[docs/Technical specification - Xtender serial protocol - V1.5.16.pdf](docs/Technical%20specification%20-%20Xtender%20serial%20protocol%20-%20V1.5.16.pdf)
-(`studer_sensor/scom.py`); only the read-only `READ_PROPERTY` service is
-implemented, one request per value. The tests check the spec's example frames
-byte for byte, but passing tests are no proof that a particular Xcom/device
-combination works: verify against the real hardware first (`--once`). That
-spec revision lists Xtender, BSP, VarioTrack and Xcom-MS; it does not list the
-VarioString, so its PV data may need a newer spec.
+Framing comes from
+[docs/Technical specification - Xtender serial protocol - V1.5.16.pdf](docs/Technical%20specification%20-%20Xtender%20serial%20protocol%20-%20V1.5.16.pdf);
+the info numbers (Xtender 3xxx, BSP 7xxx, VarioTrack 11xxx, VarioString 15xxx)
+are checked against the *Xtender serial protocol appendix* V1.6.40
+([Studer download](https://portal.studer-innotec.com/Content/docs/appendix.pdf)).
+Only the read-only `READ_PROPERTY` service is implemented (`studer_sensor/scom.py`),
+one request per value. The tests check the spec's example frames byte for byte,
+but passing tests are no proof that a particular Xcom/device combination works:
+verify against the real hardware first (`--once`). Device addresses: Xtender
+101-109, VarioTrack 301-, BSP 601, **VarioString 701-** (metric prefix `vs1`, `vs2`).
 
 ## Development
 

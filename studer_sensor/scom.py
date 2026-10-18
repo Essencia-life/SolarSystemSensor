@@ -10,6 +10,7 @@ protocol has no bulk read, so every value is its own request/response pair.
 from __future__ import annotations
 
 import logging
+import math
 import struct
 from dataclasses import dataclass
 
@@ -149,12 +150,15 @@ class InfoSpec:
     fmt: str = "FLOAT"
 
 
-# Curated subset of the user infos in spec chapters 6.2, 6.5 and 6.9.
+# Curated subset of the user infos in "Xtender serial protocol appendix" V1.6.40:
+# Xtender infos (3xxx), BSP (7xxx), VarioTrack (11xxx) and VarioString (15xxx).
 INFO_CATALOG = {
+    # Xtender
     3000: InfoSpec("battery_voltage", "V"),
+    3001: InfoSpec("battery_temperature", "°C"),
     3005: InfoSpec("battery_charge_current", "A"),
-    3007: InfoSpec("state_of_charge", "%"),
     3006: InfoSpec("battery_voltage_ripple", "V"),
+    3007: InfoSpec("state_of_charge", "%"),
     3008: InfoSpec("low_voltage_disconnect", "V"),
     3010: InfoSpec("battery_cycle_phase", None, "ENUM"),
     3011: InfoSpec("input_voltage", "V"),
@@ -176,22 +180,64 @@ INFO_CATALOG = {
     3083: InfoSpec("consumers_energy_today", "kWh"),
     3084: InfoSpec("input_frequency", "Hz"),
     3085: InfoSpec("output_frequency", "Hz"),
-    3087: InfoSpec("output_active_power", "W"),
-    3088: InfoSpec("input_active_power", "W"),
+    3087: InfoSpec("output_active_power", "W"),     # less accurate than 3136
+    3088: InfoSpec("input_active_power", "W"),      # less accurate than 3137
+    3136: InfoSpec("output_active_power", "kW"),
+    3137: InfoSpec("input_active_power", "kW"),
+    # BSP battery monitor
     7000: InfoSpec("battery_voltage", "V"),
     7001: InfoSpec("battery_current", "A"),
     7002: InfoSpec("state_of_charge", "%"),
     7003: InfoSpec("power", "W"),
-    7004: InfoSpec("remaining_autonomy"),
-    7006: InfoSpec("relative_capacity", "%"),
-    7029: InfoSpec("battery_temperature", "°C"),
+    7004: InfoSpec("remaining_autonomy", "min"),    # negative while discharging, NaN while charging
+    7005: InfoSpec("temperature", "°C"),
+    7007: InfoSpec("ah_charged_today", "Ah"),
+    7008: InfoSpec("ah_discharged_today", "Ah"),
+    7009: InfoSpec("ah_charged_yesterday", "Ah"),
+    # VarioTrack
     11000: InfoSpec("battery_voltage", "V"),
     11001: InfoSpec("battery_current", "A"),
     11002: InfoSpec("pv_voltage", "V"),
+    11003: InfoSpec("pv_current", "A"),
     11004: InfoSpec("pv_power", "kW"),
+    11005: InfoSpec("battery_temperature", "°C"),
     11006: InfoSpec("production_ah_today", "Ah"),
     11007: InfoSpec("production_kwh_today", "kWh"),
     11016: InfoSpec("operating_mode", None, "ENUM"),
+    11034: InfoSpec("error_type", None, "ENUM"),
+    # VarioString (address 701, 702, ...)
+    15000: InfoSpec("battery_voltage", "V"),
+    15001: InfoSpec("battery_current", "A"),
+    15002: InfoSpec("battery_cycle_phase", None, "ENUM"),
+    15003: InfoSpec("pv_wiring", None, "ENUM"),
+    15004: InfoSpec("pv_voltage", "V"),
+    15005: InfoSpec("pv1_voltage", "V"),
+    15006: InfoSpec("pv2_voltage", "V"),
+    15007: InfoSpec("pv_current", "A"),
+    15008: InfoSpec("pv1_current", "A"),
+    15009: InfoSpec("pv2_current", "A"),
+    15010: InfoSpec("pv_power", "kW"),
+    15011: InfoSpec("pv1_power", "kW"),
+    15012: InfoSpec("pv2_power", "kW"),
+    15013: InfoSpec("pv_operating_mode", None, "ENUM"),
+    15014: InfoSpec("pv1_operating_mode", None, "ENUM"),
+    15015: InfoSpec("pv2_operating_mode", None, "ENUM"),
+    15016: InfoSpec("production_ah_today", "Ah"),
+    15017: InfoSpec("production_kwh_today", "kWh"),
+    15018: InfoSpec("pv1_production_kwh_today", "kWh"),
+    15019: InfoSpec("pv2_production_kwh_today", "kWh"),
+    15023: InfoSpec("production_total", "MWh"),
+    15026: InfoSpec("production_ah_prev_day", "Ah"),
+    15027: InfoSpec("production_kwh_prev_day", "kWh"),   # titled "(Wh)" in the spec, unit column says kWh
+    15030: InfoSpec("irradiation_hours_today", "h"),
+    15031: InfoSpec("irradiation_hours_prev_day", "h"),
+    15032: InfoSpec("battery_temperature", "°C"),
+    15037: InfoSpec("max_pv_power_today", "kW"),
+    15042: InfoSpec("time_in_absorption_today", "h"),
+    15049: InfoSpec("error_type", None, "ENUM"),
+    15052: InfoSpec("days_until_equalization", "d"),
+    15108: InfoSpec("state", None, "ENUM"),
+    15109: InfoSpec("can_error_count_today"),
 }
 
 # First Xtender (address 101): battery, AC input and output.
@@ -199,8 +245,10 @@ DEFAULT_QUERIES = "101:3000,101:3005,101:3011,101:3012,101:3021,101:3022,101:308
 
 
 # DataHub convention: <name>_<unit>, e.g. battery_voltage_v, battery_soc_pct, pv_power_w.
-UNIT_SUFFIX = {"V": "_v", "A": "_a", "%": "_pct", "W": "_w", "kW": "_kw", "Hz": "_hz",
-               "°C": "_c", "Ah": "_ah", "kWh": "_kwh"}
+UNIT_SUFFIX = {"V": "_v", "A": "_a", "%": "_pct", "W": "_w", "Hz": "_hz", "°C": "_c",
+               "Ah": "_ah", "kWh": "_kwh", "MWh": "_mwh", "min": "_min", "h": "_h", "d": "_d"}
+# Studer reports power in kW; the DataHub example uses watts (pv_power_w).
+UNIT_CONVERSION = {"kW": ("W", 1000.0)}
 
 
 def device_label(dst: int) -> str:
@@ -210,6 +258,8 @@ def device_label(dst: int) -> str:
         return f"xt_l{dst - 190}"
     if 301 <= dst <= 331:
         return f"vt{dst - 300}"
+    if 701 <= dst <= 715:
+        return f"vs{dst - 700}"
     return {401: "xcom_ms", 501: "xcom", 601: "bsp"}.get(dst, f"dev{dst}")
 
 
@@ -220,10 +270,11 @@ class InfoQuery:
     metric: str
     unit: str | None = None
     fmt: str = "FLOAT"
+    scale: float = 1.0
 
 
 def parse_queries(spec: str | None) -> list[InfoQuery]:
-    """Parse 'dst:info[:FORMAT],...', e.g. '101:3000,601:7002,101:3010:ENUM'."""
+    """Parse 'dst:info[:FORMAT],...', e.g. '101:3000,601:7002,701:15010'."""
     queries = []
     for item in (spec or DEFAULT_QUERIES).split(","):
         item = item.strip()
@@ -237,8 +288,10 @@ def parse_queries(spec: str | None) -> list[InfoQuery]:
         fmt = parts[2].upper() if len(parts) == 3 else known.fmt
         if fmt not in _FORMATS:
             raise ValueError(f"unsupported format {fmt!r} in {item!r}")
-        queries.append(InfoQuery(device, info_id, f"{device_label(device)}_{known.name}{UNIT_SUFFIX.get(known.unit, '')}",
-                                 known.unit, fmt))
+        unit, scale = UNIT_CONVERSION.get(known.unit, (known.unit, 1.0))
+        queries.append(InfoQuery(device, info_id,
+                                 f"{device_label(device)}_{known.name}{UNIT_SUFFIX.get(unit, '')}",
+                                 unit, fmt, scale))
     return queries
 
 
@@ -247,6 +300,8 @@ class ScomReader:
 
     Failed reads (device missing, timeout, garbled frame) are logged and skipped so
     one absent device does not hide the others; if every read fails it raises.
+    NaN/infinite values (e.g. BSP remaining autonomy while charging) are skipped,
+    because they cannot be sent as JSON.
     """
 
     def __init__(self, transport, queries, src_addr: int = 1, logger=None):
@@ -254,7 +309,7 @@ class ScomReader:
         self.log = logger or logging.getLogger(__name__)
 
     def definitions(self) -> dict:
-        return {q.metric: MetricDefinition(q.metric, q.unit) for q in self.queries}
+        return {q.metric: MetricDefinition(q.metric, q.unit, q.scale) for q in self.queries}
 
     def read_info(self, query: InfoQuery):
         request = build_frame(self.src_addr, query.device, read_property_request(
@@ -268,10 +323,15 @@ class ScomReader:
         values = {}
         for query in self.queries:
             try:
-                values[query.metric] = self.read_info(query)
+                value = self.read_info(query)
             except (ScomError, ScomTimeout, ScomFrameError) as exc:
                 self.log.warning("SCOM read %s (dst %d, info %d) failed: %s",
                                  query.metric, query.device, query.info_id, exc)
+                continue
+            if isinstance(value, float) and not math.isfinite(value):
+                self.log.debug("SCOM read %s is not a finite number, skipped", query.metric)
+                continue
+            values[query.metric] = value
         if self.queries and not values:
             raise RuntimeError("all SCOM reads failed")
         return values
