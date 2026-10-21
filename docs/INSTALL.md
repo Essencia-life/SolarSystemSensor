@@ -53,19 +53,26 @@ talks RS-232 to the Raspberry Pi. It only answers once it is on the bus.
 
 - The Xcom has a DE-9 **female** RS-232 connector. Only RxD (pin 2), TxD (pin 3)
   and GND (pin 5) are connected; the port is isolated (500 V DC) from the battery.
-- **No null-modem needed.** The spec prescribes a straight cable for a PC
-  ("Female-Male, straight", spec section 2.2) and calls the PC the DTE, which
-  must ignore CTS, DTR and DCD because the Xcom only wires RxD, TxD and GND. A PC
-  or USB-RS232 adapter is the terminal side, the Xcom the device side, and those
-  two are connected 1:1. The pin table in the spec (pin 2 = RxD, pin 3 = TxD) is
-  written from the PC's point of view, which is why it looks crossed at first
-  sight.
-- Use a USB-RS232 adapter with a **male** DE-9 plug (FTDI or PL2303 chips work).
-  It can be plugged straight into the Xcom, which is the same as a straight
-  cable; otherwise use a straight female-male cable.
-- A null-modem adapter is only a last diagnostic step if everything else checks
-  out and there is still no answer. It cannot damage anything, but it should not
-  be necessary.
+- **Straight or null-modem depends on the USB adapter.** The spec prescribes a
+  straight cable for a PC ("Female-Male, straight", spec section 2.2), i.e. the
+  PC side is a normal terminal (DTE) with a **male** DE-9 plug. Not every
+  USB-RS232 adapter is wired like that.
+- **Verified working setup (on our hardware):**
+  Xcom-232i (female) → **null-modem adapter, male on both ends** →
+  USB-RS232 adapter with a **female** DE-9 socket → Raspberry Pi.
+  With the same female adapter connected straight (via a gender changer, which
+  only changes the connector gender and not the wiring) the Xcom never answered:
+  `expected 14 bytes, got 0`. Our assumption is that this adapter is wired like a
+  device (TxD/RxD already swapped), so the null-modem was needed; we did not
+  verify the adapter's internal wiring.
+- **Rule of thumb:** an adapter with a male plug that plugs directly into the
+  Xcom is the case the spec describes, so try it straight first. An adapter with
+  a female socket most likely needs the null-modem. If the Xcom stays silent
+  (0 bytes) although bus, power, port and settings are right, swap the
+  null-modem in or out. Trying both is harmless: only RxD, TxD and GND are
+  connected and the port is isolated.
+- The Xcom LED blinking green by itself does not prove that your adapter talks
+  to it; only the `--once` read does (see section 4).
 - The line settings are fixed by the device: **38400 baud, 8 data bits, even
   parity, 1 stop bit** (spec section 3.1). Nothing to configure on the Xcom.
   The baud rate is simply the transmission speed in bits per second; both ends
@@ -98,7 +105,11 @@ the adapter:
 ```sh
 sudo usermod -aG dialout studer-sensor
 ls -l /dev/serial/by-id/        # stable name of the adapter, points to /dev/ttyUSB0
+ls -l /dev/ttyUSB0              # the group shown here is the one the account needs
 ```
+
+If the device belongs to another group than `dialout` (on our Pi it was
+`plugdev`), add the account to that group instead.
 
 ## 3. Configure
 
@@ -149,11 +160,11 @@ Then extend `SCOM_INFOS` step by step, e.g.
 
 | Log message | Likely cause |
 |---|---|
-| `expected 14 bytes, got 0` (timeout) | Nothing answers: Xcom not on the bus or not powered, wrong `SERIAL_PORT`, cable/adapter (straight cable, adapter with male plug; null-modem only as a last diagnostic step) |
+| `expected 14 bytes, got 0` (timeout) | Nothing answers: Xcom not on the bus or not powered, wrong `SERIAL_PORT`, TX/RX wiring: first try the null-modem adapter in or out (see section 1; our adapter with a female socket needed it), then cable/adapter, then `SERIAL_PORT` |
 | `bad start byte`, `checksum mismatch` | Garbage on the line: bad cable/adapter, interference; settings must be 38400 8E1 |
 | `SCOM error DEVICE_NOT_FOUND` | No device at that address (e.g. no BSP at 601) |
 | `SCOM error OBJECT_ID_NOT_FOUND` | The device or firmware does not offer that info |
-| `Permission denied` on the port | Account not in `dialout`; log in again after `usermod` |
+| `Permission denied` on the port | Account not in the group that owns the device (`dialout` or e.g. `plugdev`, see `ls -l /dev/ttyUSB0`); restart the service after `usermod` |
 | `DataHub delivery failed` | URL, TLS, API key; records stay in the spool and are retried |
 
 ## 5. systemd
