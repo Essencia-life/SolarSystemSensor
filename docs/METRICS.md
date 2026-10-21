@@ -1,87 +1,86 @@
-# Getrackte Werte
+# Tracked values
 
-Alle Werte gehen als `{metric, value, unit}` an `POST /api/ingest/studer-xcom`
-und landen in der DataHub-Tabelle `sensor_measurements`. Der Metrikname folgt
-`<Gerät>_<Name>_<Einheit>`: `xt1` = Xtender 101, `vs1` = VarioString 701,
-`bsp` = BSP 601. Leistung in kW wird vor dem Senden in W umgerechnet.
-Die Info-Nummern stammen aus dem Appendix V1.6.40; Adresse 101 = Xtender,
+Every value is sent as `{metric, value, unit}` to `POST /api/ingest/studer-xcom`
+and stored in the DataHub table `sensor_measurements`. Metric names follow
+`<device>_<name>_<unit>`: `xt1` = Xtender 101, `vs1` = VarioString 701,
+`bsp` = BSP 601. Power reported in kW is converted to W before sending.
+Info numbers come from the protocol appendix V1.6.40; address 101 = Xtender,
 701 = VarioString, 601 = BSP.
 
-## 1. Bisher gelesen (Standardliste, solange `SCOM_INFOS` nicht angepasst war)
+## 1. Read so far (default list, as long as `SCOM_INFOS` was not changed)
 
-Nur der erste Xtender (101), Standardintervall 30 s (auf dem Pi evtl. schon auf 300 s gestellt).
+First Xtender (101) only, default interval 30 s (may already be set to 300 s on the Pi).
 
-| Adresse:Info | DB-Metrikname (`metric`) | Einheit | Bedeutung |
+| Address:info | DataHub metric name | Unit | Meaning |
 |---|---|---|---|
-| `101:3000` | `xt1_battery_voltage_v` | V | Batteriespannung |
-| `101:3005` | `xt1_battery_charge_current_a` | A | Batteriestrom (negativ = Entladung) |
-| `101:3011` | `xt1_input_voltage_v` | V | AC-Eingangsspannung |
-| `101:3012` | `xt1_input_current_a` | A | AC-Eingangsstrom |
-| `101:3021` | `xt1_output_voltage_v` | V | AC-Ausgangsspannung |
-| `101:3022` | `xt1_output_current_a` | A | AC-Ausgangsstrom |
-| `101:3087` | `xt1_output_active_power_w` | W | AC-Ausgangsleistung (ungenauer als 3136) |
-| `101:3088` | `xt1_input_active_power_w` | W | AC-Eingangsleistung (ungenauer als 3137) |
+| `101:3000` | `xt1_battery_voltage_v` | V | Battery voltage |
+| `101:3005` | `xt1_battery_charge_current_a` | A | Battery current (negative = discharging) |
+| `101:3011` | `xt1_input_voltage_v` | V | AC input voltage |
+| `101:3012` | `xt1_input_current_a` | A | AC input current |
+| `101:3021` | `xt1_output_voltage_v` | V | AC output voltage |
+| `101:3022` | `xt1_output_current_a` | A | AC output current |
+| `101:3087` | `xt1_output_active_power_w` | W | AC output power (less accurate than 3136) |
+| `101:3088` | `xt1_input_active_power_w` | W | AC input power (less accurate than 3137) |
 
-## 2. Neu in `deploy/studer-sensor.env.example` (Off-Grid, ohne BSP und BTS)
+## 2. New in `deploy/studer-sensor.env.example` (off-grid, without BSP and BTS)
 
-Intervall 300 s. Auf dem Pi erst aktiv, wenn `SCOM_INFOS` und `POLL_INTERVAL`
-in `/etc/studer-sensor/studer-sensor.env` übernommen und der Dienst neu gestartet
-wurde. Die alten Werte aus Abschnitt 1 bleiben in der neuen Liste, soweit sie
-nicht ersetzt sind (3000, 3005, 3011, 3012, 3022). Ersetzt wird 3087 durch 3136 und
-3088 durch 3137; 3021 (Ausgangsspannung) entfällt.
+Interval 300 s. On the Pi this only takes effect after `SCOM_INFOS` and
+`POLL_INTERVAL` are copied into `/etc/studer-sensor/studer-sensor.env` and the
+service is restarted. The old values from section 1 stay unless replaced:
+3087 is replaced by 3136, 3088 by 3137, and 3021 (output voltage) is dropped.
 
 Xtender:
 
-| Adresse:Info | DB-Metrikname (`metric`) | Einheit | Bedeutung |
+| Address:info | DataHub metric name | Unit | Meaning |
 |---|---|---|---|
-| `101:3000` | `xt1_battery_voltage_v` | V | Batteriespannung |
-| `101:3005` | `xt1_battery_charge_current_a` | A | Batteriestrom (negativ = Entladung) |
-| `101:3136` | `xt1_output_active_power_w` | W | Verbrauch (AC-Ausgang), ersetzt 3087 |
-| `101:3022` | `xt1_output_current_a` | A | AC-Ausgangsstrom |
-| `101:3028` | `xt1_operating_state` | Enum | Betriebszustand Xtender |
-| `101:3010` | `xt1_battery_cycle_phase` | Enum | Ladephase Batterie (Bulk/Absorption/Float ...) |
-| `101:3083` | `xt1_consumers_energy_today_kwh` | kWh | Verbrauch heute |
-| `101:3078` | `xt1_battery_discharge_today_kwh` | kWh | Batterieentladung heute |
-| `101:3045` | `xt1_overload_count` | – | Zähler Überlastungen |
-| `101:3011` | `xt1_input_voltage_v` | V | AC-Eingangsspannung (Generator) |
-| `101:3012` | `xt1_input_current_a` | A | AC-Eingangsstrom (Generator) |
-| `101:3137` | `xt1_input_active_power_w` | W | Generator-/Eingangsleistung, ersetzt 3088 |
-| `101:3081` | `xt1_energy_from_today_kwh` | kWh | Energie aus Quelle (Generator) heute |
-| `101:3020` | `xt1_transfer_relay` | Enum | Transferrelais (Generator durchgeschaltet?) |
+| `101:3000` | `xt1_battery_voltage_v` | V | Battery voltage |
+| `101:3005` | `xt1_battery_charge_current_a` | A | Battery current (negative = discharging) |
+| `101:3136` | `xt1_output_active_power_w` | W | Consumption (AC output); replaces 3087 |
+| `101:3022` | `xt1_output_current_a` | A | AC output current |
+| `101:3028` | `xt1_operating_state` | enum | Xtender operating state |
+| `101:3010` | `xt1_battery_cycle_phase` | enum | Battery charge phase (bulk / absorption / float ...) |
+| `101:3083` | `xt1_consumers_energy_today_kwh` | kWh | Consumption today |
+| `101:3078` | `xt1_battery_discharge_today_kwh` | kWh | Battery discharge today |
+| `101:3045` | `xt1_overload_count` | - | Overload counter |
+| `101:3011` | `xt1_input_voltage_v` | V | AC input voltage |
+| `101:3012` | `xt1_input_current_a` | A | AC input current |
+| `101:3137` | `xt1_input_active_power_w` | W | Generator / AC input power; replaces 3088 |
+| `101:3081` | `xt1_energy_from_today_kwh` | kWh | Energy from the AC source (generator) today |
+| `101:3020` | `xt1_transfer_relay` | enum | Transfer relay (generator connected through?) |
 
 VarioString (PV):
 
-| Adresse:Info | DB-Metrikname (`metric`) | Einheit | Bedeutung |
+| Address:info | DataHub metric name | Unit | Meaning |
 |---|---|---|---|
-| `701:15004` | `vs1_pv_voltage_v` | V | PV-Spannung |
-| `701:15010` | `vs1_pv_power_w` | W | PV-Leistung (kW->W) |
-| `701:15017` | `vs1_production_kwh_today_kwh` | kWh | PV-Tagesertrag |
-| `701:15108` | `vs1_state` | Enum | VarioString-Zustand |
+| `701:15004` | `vs1_pv_voltage_v` | V | PV voltage |
+| `701:15010` | `vs1_pv_power_w` | W | PV power (kW converted to W) |
+| `701:15017` | `vs1_production_kwh_today_kwh` | kWh | PV yield today |
+| `701:15108` | `vs1_state` | enum | VarioString state |
 
-Hinweis zum Generator: Die Eingangswerte (3011, 3012, 3137, 3081, 3020) zeigen nur
-dann etwas, wenn der Generator wirklich am AC-Eingang des Xtenders hängt. Wie
-er angeschlossen ist, ist noch nicht geklärt und sollte von jemandem geprüft
-werden, der die Verteilung kennt.
+Note on the generator: the input values (3011, 3012, 3137, 3081, 3020) only show
+something if the generator really feeds the Xtender's AC input. How it is
+connected has not been clarified yet and should be checked by someone who knows
+the electrical distribution.
 
-## 3. Später, falls Hardware nachgerüstet wird
+## 3. Later, if hardware is added
 
-| Adresse:Info | DB-Metrikname (`metric`) | Einheit | Bedeutung |
+| Address:info | DataHub metric name | Unit | Meaning |
 |---|---|---|---|
-| `601:7002` | `bsp_state_of_charge_pct` | % | nur mit BSP: Ladezustand |
-| `601:7004` | `bsp_remaining_autonomy_min` | min | nur mit BSP: Restlaufzeit (NaN beim Laden, wird übersprungen) |
-| `601:7005` | `bsp_temperature_c` | °C | nur mit BSP: Batterietemperatur |
-| `601:7007` | `bsp_ah_charged_today_ah` | Ah | nur mit BSP: Ah geladen heute |
-| `101:3001` | `xt1_battery_temperature_c` | °C | nur mit BTS: Batterietemperatur |
-| `101:3007` | `xt1_state_of_charge_pct` | % | nur mit BSP: Ladezustand (Xtender) |
+| `601:7002` | `bsp_state_of_charge_pct` | % | BSP only: state of charge |
+| `601:7004` | `bsp_remaining_autonomy_min` | min | BSP only: remaining autonomy (NaN while charging, skipped) |
+| `601:7005` | `bsp_temperature_c` | °C | BSP only: battery temperature |
+| `601:7007` | `bsp_ah_charged_today_ah` | Ah | BSP only: Ah charged today |
+| `101:3001` | `xt1_battery_temperature_c` | °C | BTS only: battery temperature |
+| `101:3007` | `xt1_state_of_charge_pct` | % | BSP only: state of charge (via Xtender) |
 
-Ohne BSP und BTS gibt es keinen echten Ladezustand und keine Batterietemperatur.
-Dann sind Batteriespannung und -strom, Ladephase und PV-Tagesertrag die besten
-Indikatoren für den Batteriezustand.
+Without a BSP and a BTS there is no real state of charge and no battery
+temperature. Battery voltage and current, charge phase and daily PV yield are
+then the best indicators of battery health.
 
-## Auswertungen für Grafana (Ideen)
+## Grafana ideas
 
-- Minimum von `xt1_battery_voltage_v` pro Nacht (Trend = Kapazitätsverlust)
-- Spannungseinbruch bei hohem `xt1_battery_charge_current_a` im Minus
-- Erreicht `xt1_battery_cycle_phase` noch Absorption/Float?
-- `vs1_production_kwh_today_kwh` gegen `xt1_consumers_energy_today_kwh`
-- Generatorlaufzeit aus `xt1_input_active_power_w` > 0
+- Minimum of `xt1_battery_voltage_v` per night (trend = capacity loss)
+- Voltage sag at high negative `xt1_battery_charge_current_a` (discharging under load)
+- Does `xt1_battery_cycle_phase` still reach absorption/float?
+- `vs1_production_kwh_today_kwh` against `xt1_consumers_energy_today_kwh`
+- Generator run time from `xt1_input_active_power_w` > 0
