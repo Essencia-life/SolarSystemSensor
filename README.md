@@ -19,10 +19,11 @@ device addresses. Confirm those separately before enabling polling.
 
 ## Where data is stored
 
-The DataHub is the system of record. Its `studer-xcom` endpoint validates each
-metric and stores it in the DataHub PostgreSQL/TimescaleDB
-`sensor_measurements` table. SolarSystemSensor does **not** maintain a second
-telemetry database.
+The DataHub receives the data and decides where it goes (see its README): live
+values go to Grafana Cloud (dashboards and alerting, series `datahub_<metric>`),
+and a daily export keeps the long-term archive in the DataHub PostgreSQL/TimescaleDB
+`sensor_measurements` table (5-minute values). SolarSystemSensor does **not**
+maintain a second telemetry database.
 
 The only local database is the bounded SQLite **delivery spool**. It contains
 payloads that could not yet be delivered, preserves their original capture
@@ -44,15 +45,21 @@ Content-Type: application/json
   "deviceId": "essencia-studer-01",
   "timestamp": "2026-09-23T16:42:00Z",
   "values": [
-    { "metric": "battery_voltage_v", "value": 51.2, "unit": "V" }
+    { "metric": "battery_voltage_v", "value": 51.2, "unit": "V" },
+    { "metric": "xt1_operating_state", "value": 3, "unit": null }
   ]
 }
 ```
 
+`unit` is optional: states and counters have none and are sent with `"unit": null`.
+
 The current DataHub returns HTTP `200` for successful ingestion, `400` for
 validation errors, `401` for an invalid API key, and `500` for server errors.
 Non-2xx responses are treated as delivery failures and remain in the local
-spool for retry. The DataHub API key is never logged or committed.
+spool for retry (the delay doubles up to 5 minutes). After a longer outage the
+backlog is delivered with its original timestamps; Grafana only accepts samples up
+to 2 hours behind the newest one of a series, so the DataHub stores older ones in
+the archive instead and still answers `200`. The DataHub API key is never logged or committed.
 
 ## Protocol boundary
 

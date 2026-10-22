@@ -58,3 +58,11 @@ def test_service_collects_and_drains():
  assert client.sent[0]['deviceId'] == 'd'
  assert client.sent[0]['values'] == [{'metric': 'v', 'value': 1, 'unit': None}]
  assert sp.acked == [1]
+
+def test_spool_retry_delay_is_capped(tmp_path):
+ import time
+ s=Spool(str(tmp_path/'x.db'), base_delay=1, max_delay=300); s.enqueue({'a':1},'2020Z'); rid=s.due()[0]['id']
+ before=time.time(); s.retry(rid, 0); assert 0.5 < s.db.execute('select next_try from queue').fetchone()[0]-before < 2   # 1 s
+ before=time.time(); s.retry(rid, 5); assert 30 < s.db.execute('select next_try from queue').fetchone()[0]-before < 34   # 32 s
+ before=time.time(); s.retry(rid, 40); assert 299 < s.db.execute('select next_try from queue').fetchone()[0]-before < 302  # capped, no overflow
+ before=time.time(); s.retry(rid, 100000); assert 299 < s.db.execute('select next_try from queue').fetchone()[0]-before < 302

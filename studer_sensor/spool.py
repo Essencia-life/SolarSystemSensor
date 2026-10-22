@@ -6,12 +6,16 @@ import time
 class Spool:
     """A small durable FIFO queue for records that could not be delivered."""
 
-    def __init__(self, path, max_records=10000, base_delay=1):
+    def __init__(self, path, max_records=10000, base_delay=1, max_delay=300):
         if max_records < 1:
             raise ValueError("max_records must be positive")
         self.db = sqlite3.connect(path)
         self.max_records = max_records
         self.base_delay = base_delay
+        # Without a cap the delay doubles forever; after a few hours offline a record would wait
+        # hours more, and the backlog would reach Grafana (accepts samples at most 2 h behind the
+        # newest one of a series) too late to be accepted.
+        self.max_delay = max_delay
         self.db.execute(
             "create table if not exists queue("
             "id integer primary key, payload text not null, created text not null,"
@@ -53,7 +57,9 @@ class Spool:
     def retry(self, record_id, attempts):
         self.db.execute(
             "update queue set attempts=?,next_try=? where id=?",
-            (attempts + 1, time.time() + self.base_delay * (2 ** attempts), record_id),
+            (attempts + 1,
+             time.time() + min(self.base_delay * (2 ** min(attempts, 30)), self.max_delay),
+             record_id),
         )
         self.db.commit()
 

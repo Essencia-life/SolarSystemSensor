@@ -1,7 +1,9 @@
 # Tracked values
 
-Every value is sent as `{metric, value, unit}` to `POST /api/ingest/studer-xcom`
-and stored in the DataHub table `sensor_measurements`. Metric names follow
+Every value is sent as `{metric, value, unit}` to `POST /api/ingest/studer-xcom`.
+The DataHub forwards it to Grafana Cloud (live, series `datahub_<metric>` with the
+labels `device_id`, `sensor`, `source`, `unit`) and archives it in the table
+`sensor_measurements` (5-minute values, see the DataHub README). Metric names follow
 `<device>_<name>_<unit>`: `xt1` = Xtender 101, `vs1` = VarioString 701,
 `bsp` = BSP 601. Power reported in kW is converted to W before sending.
 Info numbers come from the protocol appendix V1.6.40; address 101 = Xtender,
@@ -9,7 +11,7 @@ Info numbers come from the protocol appendix V1.6.40; address 101 = Xtender,
 
 ## 1. Read so far (default list, as long as `SCOM_INFOS` was not changed)
 
-First Xtender (101) only, default interval 30 s (may already be set to 300 s on the Pi).
+First Xtender (101) only. The code default interval is 30 s, the Pi runs with `POLL_INTERVAL=60`.
 
 | Address:info | DataHub metric name | Unit | Meaning |
 |---|---|---|---|
@@ -24,7 +26,7 @@ First Xtender (101) only, default interval 30 s (may already be set to 300 s on 
 
 ## 2. New in `deploy/studer-sensor.env.example` (off-grid, without BSP and BTS)
 
-Interval 300 s. On the Pi this only takes effect after `SCOM_INFOS` and
+Interval 60 s. On the Pi this only takes effect after `SCOM_INFOS` and
 `POLL_INTERVAL` are copied into `/etc/studer-sensor/studer-sensor.env` and the
 service is restarted. The old values from section 1 stay unless replaced:
 3087 is replaced by 3136, 3088 by 3137, and 3021 (output voltage) is dropped.
@@ -62,6 +64,11 @@ something if the generator really feeds the Xtender's AC input. How it is
 connected has not been clarified yet and should be checked by someone who knows
 the electrical distribution.
 
+Metrics with unit `enum` or `-` in the tables above have no unit: they are sent with
+`"unit": null` and appear in Grafana without the `unit` label. In the archive they keep
+the last value of each 5-minute bucket (average would be meaningless for states); the
+same holds for the "today" energy counters. All other metrics are averaged.
+
 ## 3. Later, if hardware is added
 
 | Address:info | DataHub metric name | Unit | Meaning |
@@ -78,6 +85,8 @@ temperature. Battery voltage and current, charge phase and daily PV yield are
 then the best indicators of battery health.
 
 ## Grafana ideas
+
+In Grafana every name below has the prefix `datahub_`, e.g. `datahub_xt1_battery_voltage_v`.
 
 - Minimum of `xt1_battery_voltage_v` per night (trend = capacity loss)
 - Voltage sag at high negative `xt1_battery_charge_current_a` (discharging under load)
