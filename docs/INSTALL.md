@@ -152,9 +152,9 @@ sudo -u studer-sensor sh -c 'set -a; . /etc/studer-sensor/studer-sensor.env; set
 ```
 
 Success means: no `ERROR`/`WARNING` lines, the Xcom LED blinks green (20 %)
-during the call, and `xt1_battery_voltage_v` shows up in the DataHub. The
-command prints nothing on success and exits with 0 even if reading failed, so
-judge by the log and the DataHub. Compare the voltage with the RCC display.
+during the call, and the series `datahub_xt1_battery_voltage_v` shows up in Grafana
+(Explore). The command prints nothing on success and exits with 0 even if reading
+failed, so judge by the log and Grafana. Compare the voltage with the RCC display.
 Then extend `SCOM_INFOS` step by step, e.g.
 `101:3000,601:7002,701:15004,701:15010`.
 
@@ -195,5 +195,5 @@ sudo systemctl start studer-sensor
 ```
 
 The SQLite spool survives process restarts and DataHub outages; pending records
-are retried with exponential backoff. Back up the spool database before upgrades
+are retried with exponential backoff (at most every 5 minutes). Back up the spool database before upgrades
 if telemetry durability is important.
