@@ -45,6 +45,42 @@
         "includeAll": false,
         "multi": false,
         "current": {}
+      },
+      {
+        "name": "kwh_per_liter",
+        "label": "Generator kWh per liter",
+        "type": "textbox",
+        "query": "3",
+        "current": {
+          "text": "3",
+          "value": "3"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "3",
+            "value": "3"
+          }
+        ],
+        "hide": 0
+      },
+      {
+        "name": "co2_per_liter",
+        "label": "kg CO2 per liter of diesel",
+        "type": "textbox",
+        "query": "2.65",
+        "current": {
+          "text": "2.65",
+          "value": "2.65"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "2.65",
+            "value": "2.65"
+          }
+        ],
+        "hide": 0
       }
     ]
   },
@@ -1630,6 +1666,272 @@
         }
       },
       "description": "Meaning of the numbers from the Studer appendix V1.6.40. A value that is not listed there is shown in gray as a number."
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Generator energy",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "avg_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[$__range]) * $__range_s / 3600 / 1000",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "kwatth",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Electrical energy that came in through the Xtender AC input during the selected time range (average input power x time)."
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Diesel (estimate)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 57,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(avg_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[$__range]) * $__range_s / 3600 / 1000) / $kwh_per_liter",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "litre",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Generator energy / kWh per liter. Estimate: set the variable 'Generator kWh per liter' at the top from real refuelling data."
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "CO2 (estimate)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 57,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(avg_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[$__range]) * $__range_s / 3600 / 1000) / $kwh_per_liter * $co2_per_liter",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "masskg",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Diesel estimate x kg CO2 per liter (direct emissions of the burned fuel)."
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Generator run time",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 57,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "avg_over_time((datahub_xt1_input_active_power_w{device_id=\"$device\"} > bool 50)[$__range:5m]) * $__range_s",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "s",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Time with more than 50 W at the AC input (rough, 5 minute resolution)."
+    },
+    {
+      "id": 24,
+      "type": "timeseries",
+      "title": "Diesel per day (estimate)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 61,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "avg_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[1d]) * 24 / 1000 / $kwh_per_liter",
+          "legendFormat": "liters per day",
+          "interval": "1d",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1
+          },
+          "unit": "litre"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "Trailing 24 h window per day. Grafana Cloud keeps about 14 days."
     }
   ]
 }

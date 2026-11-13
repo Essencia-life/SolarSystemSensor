@@ -104,3 +104,11 @@ In Grafana every name below has the prefix `datahub_`, e.g. `datahub_xt1_battery
 - Does `xt1_battery_cycle_phase` still reach absorption/float?
 - `vs1_production_kwh_today_kwh` against `xt1_consumers_energy_today_kwh`
 - Generator run time from `xt1_input_active_power_w` > 0
+
+## Diesel and CO2 estimate
+
+The dashboard estimates the diesel use of the generator from the energy that comes in through
+the Xtender AC input: liters = kWh / (kWh per liter), CO2 = liters x kg CO2 per liter. Both factors
+are dashboard variables. The defaults (3 kWh per liter, 2.65 kg CO2 per liter) are assumptions:
+calibrate kWh per liter with real refuelling data, because it depends strongly on the generator and its load.
+Only energy that passes through the Xtender input is counted.
