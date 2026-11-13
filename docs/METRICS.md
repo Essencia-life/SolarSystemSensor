@@ -54,6 +54,7 @@ VarioString (PV):
 
 | Address:info | DataHub metric name | Unit | Meaning |
 |---|---|---|---|
+| `701:15001` | `vs1_battery_current_a` | A | VarioString battery current (needed for net battery power) |
 | `701:15004` | `vs1_pv_voltage_v` | V | PV voltage |
 | `701:15010` | `vs1_pv_power_w` | W | PV power (kW converted to W) |
 | `701:15017` | `vs1_production_kwh_today_kwh` | kWh | PV yield today |
@@ -87,6 +88,12 @@ then the best indicators of battery health.
 ## Grafana ideas
 
 In Grafana every name below has the prefix `datahub_`, e.g. `datahub_xt1_battery_voltage_v`.
+
+- Net battery power in W (no BSP): `xt1_battery_voltage_v * (xt1_battery_charge_current_a + vs1_battery_current_a)`.
+  The Xtender and the VarioString are separate DC sources/sinks on the battery, so both
+  currents are needed. Generator charging runs through the Xtender and is already in its
+  current, so the generator input must not be subtracted. Check the sign of
+  `xt1_battery_charge_current_a` at night under load (the appendix does not state it).
 
 - Minimum of `xt1_battery_voltage_v` per night (trend = capacity loss)
 - Voltage sag at high negative `xt1_battery_charge_current_a` (discharging under load)
