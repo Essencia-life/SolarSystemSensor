@@ -411,6 +411,202 @@
       "description": "Seconds since the last battery voltage sample (polling every 300 s). Shows 'no data' after 5 minutes without a sample."
     },
     {
+      "id": 17,
+      "type": "stat",
+      "title": "Distance to shutdown",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 8,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) - sum by (device_id) (last_over_time(datahub_xt1_low_voltage_disconnect_v{device_id=\"$device\"}[15m]))",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "unit": "volt",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 2.5
+              }
+            ]
+          },
+          "decimals": 2,
+          "noValue": "no data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Battery voltage minus the low voltage disconnect (LVD) of the Xtender: how many volts remain before it shuts off. Thresholds (red < 1 V, green >= 2.5 V) are an assumption; adjust."
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Shutdown voltage (LVD)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 8,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_low_voltage_disconnect_v{device_id=\"$device\"}[15m])",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "volt",
+          "decimals": 2,
+          "noValue": "no data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Low voltage disconnect configured in the Xtender."
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "State of charge (Xtender)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 8,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_state_of_charge_pct{device_id=\"$device\"}[15m])",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 30
+              },
+              {
+                "color": "green",
+                "value": 60
+              }
+            ]
+          },
+          "decimals": 0,
+          "noValue": "no data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Info 3007. Without a BSP the Xtender may not provide a valid value (panel then shows 'no data'). Do not trust it before it has been compared with the resting voltage."
+    },
+    {
       "id": 16,
       "type": "timeseries",
       "title": "Consumption by source",
@@ -420,7 +616,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 12,
+        "y": 16,
         "w": 24,
         "h": 9
       },
@@ -618,7 +814,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 4,
+        "y": 8,
         "w": 12,
         "h": 8
       },
@@ -643,6 +839,18 @@
           },
           "expr": "min_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[24h])",
           "legendFormat": "24 h minimum",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_low_voltage_disconnect_v{device_id=\"$device\"}[15m])",
+          "legendFormat": "shutdown voltage (LVD)",
           "interval": "5m",
           "range": true,
           "instant": false
@@ -685,7 +893,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 4,
+        "y": 8,
         "w": 12,
         "h": 8
       },
@@ -740,7 +948,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 21,
+        "y": 25,
         "w": 12,
         "h": 8
       },
@@ -819,7 +1027,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 21,
+        "y": 25,
         "w": 12,
         "h": 8
       },
@@ -886,7 +1094,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 29,
+        "y": 33,
         "w": 12,
         "h": 8
       },
@@ -952,7 +1160,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 29,
+        "y": 33,
         "w": 12,
         "h": 8
       },
@@ -1031,7 +1239,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 37,
+        "y": 41,
         "w": 12,
         "h": 8
       },
@@ -1122,7 +1330,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 37,
+        "y": 41,
         "w": 12,
         "h": 8
       },
@@ -1177,7 +1385,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 45,
+        "y": 49,
         "w": 24,
         "h": 8
       },

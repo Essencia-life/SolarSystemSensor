@@ -56,6 +56,8 @@ VarioString (PV):
 
 | Address:info | DataHub metric name | Unit | Meaning |
 |---|---|---|---|
+| `101:3007` | `xt1_state_of_charge_pct` | % | State of charge as reported by the Xtender; may be invalid without a BSP (unverified) |
+| `101:3008` | `xt1_low_voltage_disconnect_v` | V | Low voltage disconnect: the Xtender shuts off below this voltage |
 | `701:15001` | `vs1_battery_current_a` | A | VarioString battery current (needed for net battery power) |
 | `701:15004` | `vs1_pv_voltage_v` | V | PV voltage |
 | `701:15010` | `vs1_pv_power_w` | W | PV power (kW converted to W) |
@@ -81,7 +83,6 @@ same holds for the "today" energy counters. All other metrics are averaged.
 | `601:7005` | `bsp_temperature_c` | °C | BSP only: battery temperature |
 | `601:7007` | `bsp_ah_charged_today_ah` | Ah | BSP only: Ah charged today |
 | `101:3001` | `xt1_battery_temperature_c` | °C | BTS only: battery temperature |
-| `101:3007` | `xt1_state_of_charge_pct` | % | BSP only: state of charge (via Xtender) |
 
 Without a BSP and a BTS there is no real state of charge and no battery
 temperature. Battery voltage and current, charge phase and daily PV yield are
@@ -97,6 +98,7 @@ In Grafana every name below has the prefix `datahub_`, e.g. `datahub_xt1_battery
   current, so the generator input must not be subtracted. Check the sign of
   `xt1_battery_charge_current_a` at night under load (the appendix does not state it).
 
+- Distance to shutdown: `xt1_battery_voltage_v - xt1_low_voltage_disconnect_v` (traffic light in the dashboard)
 - Minimum of `xt1_battery_voltage_v` per night (trend = capacity loss)
 - Voltage sag at high negative `xt1_battery_charge_current_a` (discharging under load)
 - Does `xt1_battery_cycle_phase` still reach absorption/float?
