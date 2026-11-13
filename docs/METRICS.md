@@ -3,7 +3,9 @@
 Every value is sent as `{metric, value, unit}` to `POST /api/ingest/studer-xcom`.
 The DataHub forwards it to Grafana Cloud (live, series `datahub_<metric>` with the
 labels `device_id`, `sensor`, `source`, `unit`) and archives it in the table
-`sensor_measurements` (5-minute values, see the DataHub README). Metric names follow
+`sensor_measurements` (5-minute values, see the DataHub README). A ready-made Grafana
+dashboard is in [grafana/studer-dashboard.json](grafana/studer-dashboard.json)
+(Dashboards > New > Import). Metric names follow
 `<device>_<name>_<unit>`: `xt1` = Xtender 101, `vs1` = VarioString 701,
 `bsp` = BSP 601. Power reported in kW is converted to W before sending.
 Info numbers come from the protocol appendix V1.6.40; address 101 = Xtender,
