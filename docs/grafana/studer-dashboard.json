@@ -411,6 +411,204 @@
       "description": "Seconds since the last battery voltage sample (polling every 300 s). Shows 'no data' after 5 minutes without a sample."
     },
     {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Consumption by source",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 24,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))",
+          "legendFormat": "Consumption",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0))",
+          "legendFormat": "Generator",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(((sum by (device_id) (last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0))) - ((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - clamp_min((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - ((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0)))), 0)))), 0))",
+          "legendFormat": "PV",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - clamp_min((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - ((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0)))), 0))",
+          "legendFormat": "Battery",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0))) - ((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - clamp_min((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - ((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0)))), 0))) - (((sum by (device_id) (last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0))) - ((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - clamp_min((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - ((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0)))), 0)))), 0)))",
+          "legendFormat": "Unaccounted",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "spanNulls": true,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "unit": "watt"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Consumption"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "text"
+                }
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Generator"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PV"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Battery"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Unaccounted"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "gray"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "Stacked areas show where the current consumption comes from; the stack always sums to the consumption line. Modelled, not measured: generator = AC input (max. consumption); battery = measured discharge power; PV = what PV can cover of the rest; grey = rest that the sources cannot explain (losses, inverter efficiency, sensor error)."
+    },
+    {
       "id": 7,
       "type": "timeseries",
       "title": "Battery voltage",
@@ -542,7 +740,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 12,
+        "y": 21,
         "w": 12,
         "h": 8
       },
@@ -621,7 +819,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 12,
+        "y": 21,
         "w": 12,
         "h": 8
       },
@@ -688,7 +886,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 20,
+        "y": 29,
         "w": 12,
         "h": 8
       },
@@ -754,7 +952,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 20,
+        "y": 29,
         "w": 12,
         "h": 8
       },
@@ -833,7 +1031,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 28,
+        "y": 37,
         "w": 12,
         "h": 8
       },
@@ -924,7 +1122,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 28,
+        "y": 37,
         "w": 12,
         "h": 8
       },
@@ -979,7 +1177,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 36,
+        "y": 45,
         "w": 24,
         "h": 8
       },
