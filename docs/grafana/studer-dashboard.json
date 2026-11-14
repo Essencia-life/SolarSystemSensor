@@ -25,7 +25,7 @@
         "query": "prometheus",
         "refresh": 1,
         "current": {},
-        "hide": 0
+        "hide": 2
       },
       {
         "name": "device",
@@ -44,7 +44,8 @@
         "sort": 1,
         "includeAll": false,
         "multi": false,
-        "current": {}
+        "current": {},
+        "hide": 2
       },
       {
         "name": "kwh_per_liter",
