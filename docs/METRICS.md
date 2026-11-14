@@ -56,7 +56,6 @@ VarioString (PV):
 
 | Address:info | DataHub metric name | Unit | Meaning |
 |---|---|---|---|
-| `101:3007` | `xt1_state_of_charge_pct` | % | State of charge as reported by the Xtender; may be invalid without a BSP (unverified) |
 | `101:3008` | `xt1_low_voltage_disconnect_v` | V | Low voltage disconnect: the Xtender shuts off below this voltage |
 | `701:15001` | `vs1_battery_current_a` | A | VarioString battery current (needed for net battery power) |
 | `701:15004` | `vs1_pv_voltage_v` | V | PV voltage |
@@ -83,6 +82,7 @@ same holds for the "today" energy counters. All other metrics are averaged.
 | `601:7005` | `bsp_temperature_c` | °C | BSP only: battery temperature |
 | `601:7007` | `bsp_ah_charged_today_ah` | Ah | BSP only: Ah charged today |
 | `101:3001` | `xt1_battery_temperature_c` | °C | BTS only: battery temperature |
+| `101:3007` | `xt1_state_of_charge_pct` | % | Xtender state of charge: reads a constant 512 % without a BSP (invalid), so it is not tracked |
 
 Without a BSP and a BTS there is no real state of charge and no battery
 temperature. Battery voltage and current, charge phase and daily PV yield are

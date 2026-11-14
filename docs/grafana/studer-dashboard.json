@@ -457,7 +457,7 @@
       "gridPos": {
         "x": 0,
         "y": 4,
-        "w": 8,
+        "w": 12,
         "h": 4
       },
       "targets": [
@@ -526,9 +526,9 @@
         "uid": "${datasource}"
       },
       "gridPos": {
-        "x": 8,
+        "x": 12,
         "y": 4,
-        "w": 8,
+        "w": 12,
         "h": 4
       },
       "targets": [
@@ -570,77 +570,6 @@
         "textMode": "auto"
       },
       "description": "Low voltage disconnect configured in the Xtender."
-    },
-    {
-      "id": 19,
-      "type": "stat",
-      "title": "State of charge (Xtender)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "gridPos": {
-        "x": 16,
-        "y": 4,
-        "w": 8,
-        "h": 4
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "last_over_time(datahub_xt1_state_of_charge_pct{device_id=\"$device\"}[15m])",
-          "legendFormat": "",
-          "interval": "5m",
-          "range": true,
-          "instant": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {},
-          "unit": "percent",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 30
-              },
-              {
-                "color": "green",
-                "value": 60
-              }
-            ]
-          },
-          "decimals": 0,
-          "noValue": "no data"
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "colorMode": "value",
-        "graphMode": "area",
-        "textMode": "auto"
-      },
-      "description": "Info 3007. Without a BSP the Xtender may not provide a valid value (panel then shows 'no data'). Do not trust it before it has been compared with the resting voltage."
     },
     {
       "id": 16,
@@ -1668,7 +1597,7 @@
       "description": "Meaning of the numbers from the Studer appendix V1.6.40. A value that is not listed there is shown in gray as a number."
     },
     {
-      "id": 20,
+      "id": 19,
       "type": "stat",
       "title": "Generator energy",
       "datasource": {
@@ -1721,7 +1650,7 @@
       "description": "Electrical energy that came in through the Xtender AC input during the selected time range (average input power x time)."
     },
     {
-      "id": 21,
+      "id": 20,
       "type": "stat",
       "title": "Diesel (estimate)",
       "datasource": {
@@ -1774,7 +1703,7 @@
       "description": "Generator energy / kWh per liter. Estimate: set the variable 'Generator kWh per liter' at the top from real refuelling data."
     },
     {
-      "id": 22,
+      "id": 21,
       "type": "stat",
       "title": "CO2 (estimate)",
       "datasource": {
@@ -1827,7 +1756,7 @@
       "description": "Diesel estimate x kg CO2 per liter (direct emissions of the burned fuel)."
     },
     {
-      "id": 23,
+      "id": 22,
       "type": "stat",
       "title": "Generator run time",
       "datasource": {
@@ -1880,7 +1809,7 @@
       "description": "Time with more than 50 W at the AC input (rough, 5 minute resolution)."
     },
     {
-      "id": 24,
+      "id": 23,
       "type": "timeseries",
       "title": "Diesel per day (estimate)",
       "datasource": {
