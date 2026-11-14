@@ -1,0 +1,1867 @@
+{
+  "uid": "studer-solar",
+  "title": "Studer solar system",
+  "tags": [
+    "solar",
+    "studer",
+    "essencia"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "5m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "description": "Studer Xtender + VarioString via SolarSystemSensor. Series datahub_<metric> from Grafana Cloud (14 days live).",
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "refresh": 1,
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "device",
+        "label": "Device",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "query": {
+          "query": "label_values(datahub_xt1_battery_voltage_v, device_id)",
+          "refId": "device"
+        },
+        "definition": "label_values(datahub_xt1_battery_voltage_v, device_id)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
+      },
+      {
+        "name": "kwh_per_liter",
+        "label": "Generator kWh per liter",
+        "type": "textbox",
+        "query": "3",
+        "current": {
+          "text": "3",
+          "value": "3"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "3",
+            "value": "3"
+          }
+        ],
+        "hide": 0
+      },
+      {
+        "name": "co2_per_liter",
+        "label": "kg CO2 per liter of diesel",
+        "type": "textbox",
+        "query": "2.65",
+        "current": {
+          "text": "2.65",
+          "value": "2.65"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "2.65",
+            "value": "2.65"
+          }
+        ],
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Battery voltage",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "unit": "volt",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 48
+              },
+              {
+                "color": "green",
+                "value": 50
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Default thresholds are an assumption for a 48 V lead-acid bank (red < 48 V, green >= 50 V). Adjust."
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Net battery power",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]) * on(device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m]) + on(device_id) last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m]))",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "unit": "watt",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Battery voltage x (Xtender battery current + VarioString battery current). Positive = charging. Assumes 3005 is negative when discharging; verify at night under load."
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Consumption",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "watt",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "AC output power of the Xtender."
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "PV power",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "watt",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Generator power",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "watt",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "AC input power. Only meaningful if the generator feeds the Xtender AC input."
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Data age",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "time() - max(timestamp(datahub_xt1_battery_voltage_v{device_id=\"$device\"}))",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 400
+              }
+            ]
+          },
+          "decimals": 0,
+          "noValue": "no data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Seconds since the last battery voltage sample (polling every 300 s). Shows 'no data' after 5 minutes without a sample."
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Distance to shutdown",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) - sum by (device_id) (last_over_time(datahub_xt1_low_voltage_disconnect_v{device_id=\"$device\"}[15m]))",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "unit": "volt",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 2.5
+              }
+            ]
+          },
+          "decimals": 2,
+          "noValue": "no data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Battery voltage minus the low voltage disconnect (LVD) of the Xtender: how many volts remain before it shuts off. Thresholds (red < 1 V, green >= 2.5 V) are an assumption; adjust."
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Shutdown voltage (LVD)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_low_voltage_disconnect_v{device_id=\"$device\"}[15m])",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "volt",
+          "decimals": 2,
+          "noValue": "no data"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Low voltage disconnect configured in the Xtender."
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Consumption by source",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))",
+          "legendFormat": "Consumption",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0))",
+          "legendFormat": "Generator",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(((sum by (device_id) (last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0))) - ((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - clamp_min((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - ((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0)))), 0)))), 0))",
+          "legendFormat": "PV",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - clamp_min((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - ((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0)))), 0))",
+          "legendFormat": "Battery",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0))) - ((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - clamp_min((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - ((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0)))), 0))) - (((sum by (device_id) (last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0))) - ((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - clamp_min((clamp_min(-1 * (sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])) * ((sum by (device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))) + (sum by (device_id) (last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]))))), 0)) - ((sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])) - (((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - clamp_min(((sum by (device_id) (last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])) or 0 * sum by (device_id) (last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])))) - (sum by (device_id) (last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m]))), 0)))), 0)))), 0)))",
+          "legendFormat": "Unaccounted",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "spanNulls": true,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "unit": "watt"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Consumption"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "text"
+                }
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "mode": "none",
+                  "group": "A"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Generator"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PV"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Battery"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Unaccounted"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "gray"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "Stacked areas show where the current consumption comes from; the stack always sums to the consumption line. Modelled, not measured: generator = AC input (max. consumption); battery = measured discharge power; PV = what PV can cover of the rest; grey = rest that the sources cannot explain (losses, inverter efficiency, sensor error)."
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Battery voltage",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m])",
+          "legendFormat": "voltage",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "min_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[24h])",
+          "legendFormat": "24 h minimum",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_low_voltage_disconnect_v{device_id=\"$device\"}[15m])",
+          "legendFormat": "shutdown voltage (LVD)",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "volt"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "A falling 24 h minimum from week to week means capacity loss. Sag under load shows in the voltage dips."
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Net battery power",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_battery_voltage_v{device_id=\"$device\"}[15m]) * on(device_id) (last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m]) + on(device_id) last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m]))",
+          "legendFormat": "net battery power",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "Battery voltage x (Xtender battery current + VarioString battery current). Positive = charging. Assumes 3005 is negative when discharging; verify at night under load."
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Power balance",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])",
+          "legendFormat": "PV",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])",
+          "legendFormat": "generator in",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_output_active_power_w{device_id=\"$device\"}[15m])",
+          "legendFormat": "consumption",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "PV + generator is roughly consumption + battery charging + losses."
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Battery currents",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 25,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_battery_charge_current_a{device_id=\"$device\"}[15m])",
+          "legendFormat": "Xtender",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_vs1_battery_current_a{device_id=\"$device\"}[15m])",
+          "legendFormat": "VarioString",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "amp"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "Both are needed for the net battery power: VarioString charges the battery directly."
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "PV power and voltage",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_vs1_pv_power_w{device_id=\"$device\"}[15m])",
+          "legendFormat": "PV power (W)",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_vs1_pv_voltage_v{device_id=\"$device\"}[15m])",
+          "legendFormat": "PV voltage (V)",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Generator",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[15m])",
+          "legendFormat": "power (W)",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_input_voltage_v{device_id=\"$device\"}[15m])",
+          "legendFormat": "voltage (V)",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_input_current_a{device_id=\"$device\"}[15m])",
+          "legendFormat": "current (A)",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "Run time and output of the generator at the AC input."
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Energy today (kWh)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_vs1_production_kwh_today_kwh{device_id=\"$device\"}[15m])",
+          "legendFormat": "PV yield",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_consumers_energy_today_kwh{device_id=\"$device\"}[15m])",
+          "legendFormat": "consumption",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_battery_discharge_today_kwh{device_id=\"$device\"}[15m])",
+          "legendFormat": "battery discharge",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_energy_from_today_kwh{device_id=\"$device\"}[15m])",
+          "legendFormat": "from generator",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "kwatth"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "Daily counters of the devices; they reset at midnight."
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Overloads (per 24 h)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 41,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "increase(datahub_xt1_overload_count{device_id=\"$device\"}[24h])",
+          "legendFormat": "overloads",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "Counter increase: shows when the load hits the Xtender limit."
+    },
+    {
+      "id": 15,
+      "type": "state-timeline",
+      "title": "States",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 49,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_operating_state{device_id=\"$device\"}[15m])",
+          "legendFormat": "Xtender state",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_battery_cycle_phase{device_id=\"$device\"}[15m])",
+          "legendFormat": "charge phase",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_vs1_state{device_id=\"$device\"}[15m])",
+          "legendFormat": "VarioString state",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "last_over_time(datahub_xt1_transfer_relay{device_id=\"$device\"}[15m])",
+          "legendFormat": "transfer relay",
+          "interval": "5m",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "gray"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Xtender state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Invalid",
+                        "color": "gray",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "Inverter",
+                        "color": "blue",
+                        "index": 1
+                      },
+                      "2": {
+                        "text": "Charger",
+                        "color": "green",
+                        "index": 2
+                      },
+                      "3": {
+                        "text": "Boost",
+                        "color": "orange",
+                        "index": 3
+                      },
+                      "4": {
+                        "text": "Injection",
+                        "color": "purple",
+                        "index": 4
+                      },
+                      "6": {
+                        "text": "Off",
+                        "color": "dark-red",
+                        "index": 5
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "charge phase"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Invalid",
+                        "color": "gray",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "Bulk",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "2": {
+                        "text": "Absorption",
+                        "color": "yellow",
+                        "index": 2
+                      },
+                      "3": {
+                        "text": "Equalise",
+                        "color": "purple",
+                        "index": 3
+                      },
+                      "4": {
+                        "text": "Float",
+                        "color": "green",
+                        "index": 4
+                      },
+                      "5": {
+                        "text": "Reduced float",
+                        "color": "light-green",
+                        "index": 5
+                      },
+                      "6": {
+                        "text": "Periodic absorption",
+                        "color": "dark-yellow",
+                        "index": 6
+                      },
+                      "7": {
+                        "text": "Mixing",
+                        "color": "blue",
+                        "index": 7
+                      },
+                      "8": {
+                        "text": "Forming",
+                        "color": "dark-blue",
+                        "index": 8
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "VarioString state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Off",
+                        "color": "gray",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "On",
+                        "color": "green",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "transfer relay"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Opened (no generator)",
+                        "color": "gray",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "Closed (generator through)",
+                        "color": "red",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showValue": "auto",
+        "mergeValues": true,
+        "alignValue": "left",
+        "rowHeight": 0.8,
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "description": "Meaning of the numbers from the Studer appendix V1.6.40. A value that is not listed there is shown in gray as a number."
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "Generator energy",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "avg_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[$__range]) * $__range_s / 3600 / 1000",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "kwatth",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Electrical energy that came in through the Xtender AC input during the selected time range (average input power x time)."
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Diesel (estimate)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 57,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(avg_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[$__range]) * $__range_s / 3600 / 1000) / $kwh_per_liter",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "litre",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Generator energy / kWh per liter. Estimate: set the variable 'Generator kWh per liter' at the top from real refuelling data."
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "CO2 (estimate)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 57,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "(avg_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[$__range]) * $__range_s / 3600 / 1000) / $kwh_per_liter * $co2_per_liter",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "masskg",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Diesel estimate x kg CO2 per liter (direct emissions of the burned fuel)."
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Generator run time",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 57,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "avg_over_time((datahub_xt1_input_active_power_w{device_id=\"$device\"} > bool 50)[$__range:5m]) * $__range_s",
+          "legendFormat": "",
+          "interval": "5m",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {},
+          "unit": "s",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "description": "Time with more than 50 W at the AC input (rough, 5 minute resolution)."
+    },
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "Diesel per day, last 7 days (estimate)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 61,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "avg_over_time(datahub_xt1_input_active_power_w{device_id=\"$device\"}[1d]) * 24 / 1000 / $kwh_per_liter",
+          "legendFormat": "liters per day",
+          "interval": "1d",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1
+          },
+          "unit": "litre"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "description": "One bar per day (trailing 24 h window), always the last 7 days regardless of the dashboard time range. Grafana Cloud keeps about 14 days.",
+      "timeFrom": "7d"
+    }
+  ]
+}
